@@ -121,6 +121,221 @@
     </ForeignKey>
 </Table>
 
+<!-- saas_tenant - security boundary for every company workspace -->
+<Table Name="saas_tenant">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="slug" Required="true" Size="100" Type="VARCHAR"/>
+    <Column Name="name" Required="true" Size="200" Type="VARCHAR"/>
+    <Column Name="status" Required="true" Size="20" Type="VARCHAR"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_tenant_slug">
+        <UniqueColumn Name="slug"/>
+    </Unique>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_department - departments are always owned by one tenant -->
+<Table Name="saas_department">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="name" Required="true" Size="150" Type="VARCHAR"/>
+    <Column Name="valid_id" Required="true" Type="SMALLINT"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_department_tenant_name">
+        <UniqueColumn Name="tenant_id"/>
+        <UniqueColumn Name="name"/>
+    </Unique>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="valid">
+        <Reference Local="valid_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_tenant_user - immutable user-to-tenant membership boundary -->
+<Table Name="saas_tenant_user">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="user_id" Required="true" Type="INTEGER"/>
+    <Column Name="department_id" Required="false" Type="BIGINT"/>
+    <Column Name="access_level" Required="true" Size="30" Type="VARCHAR"/>
+    <Column Name="valid_id" Required="true" Type="SMALLINT"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_tenant_user_user">
+        <UniqueColumn Name="user_id"/>
+    </Unique>
+    <Index Name="saas_tenant_user_tenant">
+        <IndexColumn Name="tenant_id"/>
+    </Index>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_department">
+        <Reference Local="department_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="valid">
+        <Reference Local="valid_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="user_id" Foreign="id"/>
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_plan - Basic, Pro and Max subscription definitions -->
+<Table Name="saas_plan">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="INTEGER"/>
+    <Column Name="code" Required="true" Size="30" Type="VARCHAR"/>
+    <Column Name="name" Required="true" Size="100" Type="VARCHAR"/>
+    <Column Name="user_limit" Required="false" Type="INTEGER"/>
+    <Column Name="valid_id" Required="true" Type="SMALLINT"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_plan_code">
+        <UniqueColumn Name="code"/>
+    </Unique>
+    <ForeignKey ForeignTable="valid">
+        <Reference Local="valid_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_module - licensable navigation/backend modules -->
+<Table Name="saas_module">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="INTEGER"/>
+    <Column Name="code" Required="true" Size="60" Type="VARCHAR"/>
+    <Column Name="name" Required="true" Size="150" Type="VARCHAR"/>
+    <Column Name="valid_id" Required="true" Type="SMALLINT"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_module_code">
+        <UniqueColumn Name="code"/>
+    </Unique>
+    <ForeignKey ForeignTable="valid">
+        <Reference Local="valid_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_plan_module - default module licensing per subscription plan -->
+<Table Name="saas_plan_module">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="plan_id" Required="true" Type="INTEGER"/>
+    <Column Name="module_id" Required="true" Type="INTEGER"/>
+    <Column Name="enabled" Required="true" Type="SMALLINT"/>
+    <Unique Name="saas_plan_module_relation">
+        <UniqueColumn Name="plan_id"/>
+        <UniqueColumn Name="module_id"/>
+    </Unique>
+    <ForeignKey ForeignTable="saas_plan">
+        <Reference Local="plan_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_module">
+        <Reference Local="module_id" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_subscription - current tenant subscription and lifecycle -->
+<Table Name="saas_subscription">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="plan_id" Required="true" Type="INTEGER"/>
+    <Column Name="status" Required="true" Size="20" Type="VARCHAR"/>
+    <Column Name="start_time" Required="true" Type="DATE"/>
+    <Column Name="end_time" Required="false" Type="DATE"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Index Name="saas_subscription_tenant">
+        <IndexColumn Name="tenant_id"/>
+    </Index>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_plan">
+        <Reference Local="plan_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_tenant_module - Super Admin per-company module override -->
+<Table Name="saas_tenant_module">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="module_id" Required="true" Type="INTEGER"/>
+    <Column Name="enabled" Required="true" Type="SMALLINT"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_tenant_module_relation">
+        <UniqueColumn Name="tenant_id"/>
+        <UniqueColumn Name="module_id"/>
+    </Unique>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_module">
+        <Reference Local="module_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- saas_object_tenant - ownership for tenant-scoped domain records -->
+<Table Name="saas_object_tenant">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="object_type" Required="true" Size="60" Type="VARCHAR"/>
+    <Column Name="object_id" Required="true" Size="100" Type="VARCHAR"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_object_tenant_object">
+        <UniqueColumn Name="object_type"/>
+        <UniqueColumn Name="object_id"/>
+    </Unique>
+    <Index Name="saas_object_tenant_tenant">
+        <IndexColumn Name="tenant_id"/>
+    </Index>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
 <!-- user preferences -->
 <Table Name="user_preferences">
     <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
