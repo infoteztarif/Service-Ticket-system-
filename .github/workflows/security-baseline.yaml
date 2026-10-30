@@ -1,0 +1,59 @@
+---
+name: Security Baseline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-security:
+    name: Workflow security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Reject dangerous workflow patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -nE '(^|[[:space:]])eval[[:space:]]' .github/workflows; then
+            echo 'GitHub workflows must not execute dynamically evaluated commands.' >&2
+            exit 1
+          fi
+          while IFS= read -r workflow; do
+            if grep -qE 'actions/checkout@|github\.event\.pull_request\.head' "$workflow"; then
+              echo "pull_request_target workflow executes PR-controlled code: $workflow" >&2
+              exit 1
+            fi
+          done < <(
+            grep -RlE 'pull_request_target:' .github/workflows \
+              | grep -v '/security-baseline\.yaml$' || true
+          )
+
+      - name: Check Perl syntax for changed modules
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          mapfile -t files < <(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '*.pm' '*.pl')
+          if (( ${#files[@]} == 0 )); then
+            echo 'No changed Perl files.'
+            exit 0
+          fi
+          for file in "${files[@]}"; do
+            perl -I. -I./Kernel/cpan-lib -c "$file"
+          done
