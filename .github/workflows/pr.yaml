@@ -1,6 +1,10 @@
 ---
 name: Pull Request
 
+permissions:
+  contents: read
+
+
 # pull_request_target runs in the base repository, so secrets are available
 # for pull requests from forks. This workflow does not check out pull request code.
 on:
@@ -23,9 +27,24 @@ jobs:
           echo "CURL_TOKEN or CURL_DATA is not set."
           exit 1
         fi
-        # CURL_DATA is the full curl argument list. ${CURL_TOKEN} and
-        # ${GITHUB_BASE_REF} in that value are expanded here.
-        if ! eval "curl $CURL_DATA"; then
-          echo "Request failed."
-          exit 1
-        fi
+        # Keep compatibility with the existing CURL_DATA secret while avoiding
+        # shell evaluation. shlex parses arguments, but metacharacters and
+        # command substitutions are passed to curl as plain text.
+        python3 - <<'PY'
+        import os
+        import shlex
+        import subprocess
+
+        values = {
+            "${CURL_TOKEN}": os.environ["CURL_TOKEN"],
+            "${GITHUB_BASE_REF}": os.environ["GITHUB_BASE_REF"],
+        }
+        arguments = os.environ["CURL_DATA"]
+        for placeholder, value in values.items():
+            arguments = arguments.replace(placeholder, value)
+
+        subprocess.run(
+            ["curl", "--fail-with-body", "--silent", "--show-error", *shlex.split(arguments)],
+            check=True,
+        )
+        PY

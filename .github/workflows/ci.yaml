@@ -1,6 +1,13 @@
 ---
 name: CI
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 # Controls when the action will run.
 on:
   push:
@@ -39,7 +46,7 @@ jobs:
 
       - name: Prepare code policy
         run: |
-          cpanm --verbose Algorithm::Diff Code::TidyAll Perl::Critic Perl::Tidy Pod::POM XML::Parser
+          cpanm --verbose Algorithm::Diff Code::TidyAll JSON Perl::Critic Perl::Tidy Pod::POM XML::Parser
           codepolicy/bin/znuny.CodePolicy.pl --install-eslint
 
       - name: Run code policy
