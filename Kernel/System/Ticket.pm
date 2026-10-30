@@ -47,6 +47,7 @@ our @ObjectDependencies = (
     'Kernel::System::Priority',
     'Kernel::System::Queue',
     'Kernel::System::SLA',
+    'Kernel::System::SaaS::Tenant',
     'Kernel::System::Service',
     'Kernel::System::State',
     'Kernel::System::Ticket::Article',
@@ -603,6 +604,17 @@ sub TicketCreate {
         UserID       => $Param{UserID},
     );
 
+    # Bind newly created tickets to the immutable request tenant before any
+    # event handler or asynchronous consumer can observe the ticket.
+    my $TenantObject  = $Kernel::OM->Get('Kernel::System::SaaS::Tenant');
+    my $TenantContext = $TenantObject->ContextGet();
+    if ($TenantContext) {
+        return if !$TenantObject->ObjectTenantSet(
+            ObjectType => 'Ticket',
+            ObjectID   => $TicketID,
+        );
+    }
+
     # add history entry
     $Self->HistoryAdd(
         TicketID     => $TicketID,
@@ -705,6 +717,19 @@ sub TicketDelete {
             );
             return;
         }
+    }
+
+    my $TenantObject  = $Kernel::OM->Get('Kernel::System::SaaS::Tenant');
+    my $TenantContext = $TenantObject->ContextGet();
+    if (
+        $TenantContext
+        && !$TenantObject->ObjectAccessCheck(
+            ObjectType => 'Ticket',
+            ObjectID   => $Param{TicketID},
+        )
+        )
+    {
+        return;
     }
 
     # Delete dynamic field values for this ticket.
@@ -1190,6 +1215,19 @@ sub TicketGet {
             Priority => 'error',
             Message  => 'Need TicketID!'
         );
+        return;
+    }
+
+    my $TenantObject  = $Kernel::OM->Get('Kernel::System::SaaS::Tenant');
+    my $TenantContext = $TenantObject->ContextGet();
+    if (
+        $TenantContext
+        && !$TenantObject->ObjectAccessCheck(
+            ObjectType => 'Ticket',
+            ObjectID   => $Param{TicketID},
+        )
+        )
+    {
         return;
     }
     $Param{Extended} = $Param{Extended} ? 1 : 0;
@@ -3575,6 +3613,19 @@ sub TicketPermission {
             );
             return;
         }
+    }
+
+    my $TenantObject  = $Kernel::OM->Get('Kernel::System::SaaS::Tenant');
+    my $TenantContext = $TenantObject->ContextGet();
+    if (
+        $TenantContext
+        && !$TenantObject->ObjectAccessCheck(
+            ObjectType => 'Ticket',
+            ObjectID   => $Param{TicketID},
+        )
+        )
+    {
+        return;
     }
 
     # get needed objects
