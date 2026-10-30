@@ -107,7 +107,7 @@ jobs:
           if [ "$(git diff --exit-code scripts/database/*schema*)" ]; then echo 'The database schemas are not updated.' && exit 1; else echo 'All database schemas are updated.' && exit 0; fi
 
       - name: Upload generated database schemas
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v6
         with:
           name: generated-database-schemas
