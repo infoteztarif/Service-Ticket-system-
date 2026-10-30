@@ -318,7 +318,7 @@
     <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
     <Column Name="tenant_id" Required="true" Type="BIGINT"/>
     <Column Name="object_type" Required="true" Size="60" Type="VARCHAR"/>
-    <Column Name="object_id" Required="true" Size="100" Type="VARCHAR"/>
+    <Column Name="object_id" Required="true" Type="BIGINT"/>
     <Column Name="create_time" Required="true" Type="DATE"/>
     <Column Name="create_by" Required="true" Type="INTEGER"/>
     <Unique Name="saas_object_tenant_object">
