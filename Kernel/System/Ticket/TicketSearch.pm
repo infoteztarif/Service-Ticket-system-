@@ -553,6 +553,21 @@ sub TicketSearch {
 
     my $SQLExt = ' WHERE 1=1';
 
+    # Filter in SQL so counts, sorting, limits and cached results cannot leak
+    # ticket existence across tenant boundaries.
+    my $TenantContext = $Kernel::OM->Get('Kernel::System::SaaS::Tenant')->ContextGet();
+    if ($TenantContext) {
+        my $TenantID = $DBObject->Quote( $TenantContext->{TenantID}, 'Integer' );
+        return if !defined $TenantID;
+
+        $SQLFrom .= q{
+            INNER JOIN saas_object_tenant sot
+                ON sot.object_type = 'Ticket'
+                AND sot.object_id = st.id
+        };
+        $SQLExt .= " AND sot.tenant_id = $TenantID";
+    }
+
     # Limit the search to just one (or a list) TicketID (used by the GenericAgent
     #   to filter for events on single tickets with the job's ticket filter).
     if ( IsStringWithData( $Param{TicketID} ) || IsArrayRefWithData( $Param{TicketID} ) ) {
