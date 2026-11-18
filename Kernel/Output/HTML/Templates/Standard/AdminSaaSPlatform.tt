@@ -1,7 +1,7 @@
 # --
 # Copyright (C) 2026 Teztarif
 # --
-<div class="MainBox ARIARoleMain" style="padding:18px">
+<div class="MainBox ARIARoleMain TeztarifAdminPage">
     <h1>Teztarif Platform — Super Admin</h1>
     <p>Only explicitly authorized platform administrators can access this page.</p>
     [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
