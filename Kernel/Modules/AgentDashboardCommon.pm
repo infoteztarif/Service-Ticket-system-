@@ -1096,6 +1096,27 @@ sub Run {
         }
     }
 
+    if ( $Self->{Action} eq 'AgentDashboard' ) {
+        my $Context = $Kernel::OM->Get('Kernel::System::SaaS::Tenant')->ContextGet();
+        if ( $Context && $Context->{UserID} == $Self->{UserID} ) {
+            my $CanSeeAlerts = $Kernel::OM->Get(
+                'Kernel::System::SaaS::Navigation'
+            )->AllowedAction(
+                UserID => $Self->{UserID},
+                Action => 'AgentSaaSAlerts',
+            );
+            if ($CanSeeAlerts) {
+                my $Alerts = $Kernel::OM->Get(
+                    'Kernel::System::SaaS::TicketAlerts'
+                )->List( UserID => $Self->{UserID} );
+                $LayoutObject->Block(
+                    Name => 'TeztarifAlertsShortcut',
+                    Data => { AlertCount => scalar @{$Alerts} },
+                );
+            }
+        }
+    }
+
     my $Output = $LayoutObject->Header();
     $Output .= $LayoutObject->NavigationBar();
     $Output .= $LayoutObject->Output(
