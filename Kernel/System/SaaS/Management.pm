@@ -321,6 +321,204 @@ SQL
     );
 }
 
+
+# Platform operations deliberately require an allowlisted administrator.
+sub CompanyUpdate {
+    my ( $Self, %Param ) = @_;
+    return if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    return if !$Param{TenantID} || $Param{TenantID} !~ /\A[0-9]+\z/;
+    return if !$Param{Name} || length( $Param{Name} ) > 200;
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Do(
+        SQL => 'UPDATE saas_tenant SET name = ?, change_time = current_timestamp, change_by = ? WHERE id = ?',
+        Bind => [ \$Param{Name}, \$Param{UserID}, \$Param{TenantID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $Param{TenantID}, UserID => $Param{UserID},
+        Action => 'company_update', ObjectType => 'Tenant', ObjectID => $Param{TenantID},
+    );
+}
+
+sub CompanyStatusSet {
+    my ( $Self, %Param ) = @_;
+    return if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    return if !$Param{TenantID} || $Param{TenantID} !~ /\A[0-9]+\z/;
+    return if ( $Param{Status} // '' ) !~ /\A(?:active|suspended)\z/;
+
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    if ( $Param{Status} eq 'active' ) {
+        # Never activate without an actual active admin and non-expired plan.
+        return if !$DB->Prepare(
+            SQL => <<'SQL',
+SELECT t.id
+FROM saas_tenant t
+WHERE t.id = ?
+    AND EXISTS (
+        SELECT 1 FROM saas_tenant_user tu
+        WHERE tu.tenant_id = t.id AND tu.access_level = 'company_admin'
+            AND tu.valid_id = 1
+    )
+    AND EXISTS (
+        SELECT 1 FROM saas_subscription s
+        WHERE s.tenant_id = t.id AND s.status IN ('active', 'trial')
+            AND s.start_time <= current_timestamp
+            AND (s.end_time IS NULL OR s.end_time > current_timestamp)
+    )
+SQL
+            Bind => [ \$Param{TenantID} ], Limit => 1,
+        );
+        return if !$DB->FetchrowArray();
+    }
+    return if !$DB->Do(
+        SQL => 'UPDATE saas_tenant SET status = ?, change_time = current_timestamp, change_by = ? WHERE id = ?',
+        Bind => [ \$Param{Status}, \$Param{UserID}, \$Param{TenantID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $Param{TenantID}, UserID => $Param{UserID},
+        Action => 'company_status_' . $Param{Status},
+        ObjectType => 'Tenant', ObjectID => $Param{TenantID},
+    );
+}
+
+# Only existing Znuny users may be enrolled; authentication provisioning
+# and email invitations require a separate validated workflow.
+sub CompanyAdminAttach {
+    my ( $Self, %Param ) = @_;
+    return if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    return if !$Param{TenantID} || $Param{TenantID} !~ /\A[0-9]+\z/;
+    return if !$Param{MemberUserID} || $Param{MemberUserID} !~ /\A[0-9]+\z/;
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_tenant_user WHERE user_id = ?',
+        Bind => [ \$Param{MemberUserID} ], Limit => 1,
+    );
+    return if $DB->FetchrowArray(); # Never move an existing member across tenants.
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_tenant WHERE id = ?',
+        Bind => [ \$Param{TenantID} ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Do(
+        SQL => <<'SQL',
+INSERT INTO saas_tenant_user
+(tenant_id, user_id, access_level, valid_id, create_time, create_by, change_time, change_by)
+VALUES (?, ?, 'company_admin', 1, current_timestamp, ?, current_timestamp, ?)
+SQL
+        Bind => [ \$Param{TenantID}, \$Param{MemberUserID}, \$Param{UserID}, \$Param{UserID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $Param{TenantID}, UserID => $Param{UserID},
+        Action => 'company_admin_attach', ObjectType => 'User', ObjectID => $Param{MemberUserID},
+    );
+}
+
+sub SubscriptionAssign {
+    my ( $Self, %Param ) = @_;
+    return if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    return if !$Param{TenantID} || $Param{TenantID} !~ /\A[0-9]+\z/;
+    return if !$Param{PlanID} || $Param{PlanID} !~ /\A[0-9]+\z/;
+    return if ( $Param{Status} // '' ) !~ /\A(?:active|trial|cancelled)\z/;
+    # ISO-8601-like timestamps must be supplied by the trusted platform admin.
+    for my $DateField (qw(StartTime EndTime)) {
+        next if $DateField eq 'EndTime' && !$Param{$DateField};
+        return if !$Param{$DateField}
+            || $Param{$DateField} !~ /\A\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\z/;
+    }
+    return if $Param{EndTime} && $Param{EndTime} le $Param{StartTime};
+
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_plan WHERE id = ? AND valid_id = 1',
+        Bind => [ \$Param{PlanID} ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_tenant WHERE id = ?',
+        Bind => [ \$Param{TenantID} ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+
+    # Replace only currently effective subscriptions to avoid overlapping grants.
+    return if !$DB->Do(
+        SQL => "UPDATE saas_subscription SET status = 'cancelled', change_time = current_timestamp, change_by = ? WHERE tenant_id = ? AND status IN ('active', 'trial')",
+        Bind => [ \$Param{UserID}, \$Param{TenantID} ],
+    );
+    my $EndTime = $Param{EndTime} || undef;
+    return if !$DB->Do(
+        SQL => <<'SQL',
+INSERT INTO saas_subscription
+(tenant_id, plan_id, status, start_time, end_time, create_time, create_by, change_time, change_by)
+VALUES (?, ?, ?, ?, ?, current_timestamp, ?, current_timestamp, ?)
+SQL
+        Bind => [
+            \$Param{TenantID}, \$Param{PlanID}, \$Param{Status},
+            \$Param{StartTime}, \$EndTime, \$Param{UserID}, \$Param{UserID},
+        ],
+    );
+    return $Self->_Audit(
+        TenantID => $Param{TenantID}, UserID => $Param{UserID},
+        Action => 'subscription_assign', ObjectType => 'Plan', ObjectID => $Param{PlanID},
+    );
+}
+
+sub ModuleOverrideSet {
+    my ( $Self, %Param ) = @_;
+    return if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    return if !$Param{TenantID} || $Param{TenantID} !~ /\A[0-9]+\z/;
+    return if ( $Param{Module} // '' ) !~ /\A[a-z][a-z0-9_]{1,59}\z/;
+    return if !defined $Param{Enabled} || $Param{Enabled} !~ /\A[01]\z/;
+
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_module WHERE code = ? AND valid_id = 1',
+        Bind => [ \$Param{Module} ], Limit => 1,
+    );
+    my @Module = $DB->FetchrowArray();
+    return if !@Module;
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_tenant WHERE id = ?',
+        Bind => [ \$Param{TenantID} ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_tenant_module WHERE tenant_id = ? AND module_id = ?',
+        Bind => [ \$Param{TenantID}, \$Module[0] ], Limit => 1,
+    );
+    my @Current = $DB->FetchrowArray();
+    my $Success = @Current
+        ? $DB->Do(
+            SQL => 'UPDATE saas_tenant_module SET enabled = ?, change_time = current_timestamp, change_by = ? WHERE id = ? AND tenant_id = ?',
+            Bind => [ \$Param{Enabled}, \$Param{UserID}, \$Current[0], \$Param{TenantID} ],
+        )
+        : $DB->Do(
+            SQL => 'INSERT INTO saas_tenant_module (tenant_id, module_id, enabled, change_time, change_by) VALUES (?, ?, ?, current_timestamp, ?)',
+            Bind => [ \$Param{TenantID}, \$Module[0], \$Param{Enabled}, \$Param{UserID} ],
+        );
+    return if !$Success;
+    return $Self->_Audit(
+        TenantID => $Param{TenantID}, UserID => $Param{UserID},
+        Action => 'module_override_set', ObjectType => 'Module', ObjectID => $Param{Module},
+    );
+}
+
+sub CatalogList {
+    my ( $Self, %Param ) = @_;
+    return { Plans => [], Modules => [] } if !$Self->IsPlatformAdmin( UserID => $Param{UserID} );
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    my %Catalog = ( Plans => [], Modules => [] );
+    for my $Spec (
+        [ Plans => 'SELECT id, name FROM saas_plan WHERE valid_id = 1 ORDER BY name' ],
+        [ Modules => 'SELECT id, code FROM saas_module WHERE valid_id = 1 ORDER BY code' ],
+    ) {
+        return \%Catalog if !$DB->Prepare( SQL => $Spec->[1] );
+        while ( my @Row = $DB->FetchrowArray() ) {
+            push @{ $Catalog{ $Spec->[0] } }, { ID => $Row[0], Name => $Row[1] };
+        }
+    }
+    return \%Catalog;
+}
+
 sub _Audit {
     my ( $Self, %Param ) = @_;
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
