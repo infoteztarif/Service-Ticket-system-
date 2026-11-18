@@ -25,6 +25,19 @@ sub Run {
     my $Alerts = $Kernel::OM->Get('Kernel::System::SaaS::TicketAlerts')->List(
         UserID => $Self->{UserID},
     );
+    if ( $Self->{Subaction} eq 'Poll' ) {
+        my $JSON = $Kernel::OM->Get('Kernel::System::JSON')->Encode(
+            Data => { Count => scalar @{$Alerts} },
+        );
+        return $Layout->Attachment(
+            ContentType => 'application/json',
+            Charset => 'utf-8',
+            Content => $JSON,
+            Type => 'inline',
+            NoCache => 1,
+        );
+    }
+
     for my $Alert ( @{$Alerts} ) {
         $Layout->Block( Name => 'SaaSTicketAlertRow', Data => $Alert );
     }
