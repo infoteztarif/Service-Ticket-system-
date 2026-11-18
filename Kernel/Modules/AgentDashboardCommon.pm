@@ -1076,6 +1076,26 @@ sub Run {
         }
     }
 
+    if ( $Self->{Action} eq 'AgentDashboard' ) {
+        my $Context = $Kernel::OM->Get(
+            'Kernel::System::SaaS::Tenant'
+        )->ContextGet();
+        if ( $Context && $Context->{UserID} == $Self->{UserID} ) {
+            my $Authorized = $Kernel::OM->Get(
+                'Kernel::System::SaaS::Permission'
+            )->Check(
+                UserID => $Self->{UserID},
+                Module => 'reports', Action => 'view', Scope => 'company',
+            );
+            my $TicketEnabled = $Kernel::OM->Get(
+                'Kernel::System::SaaS::Tenant'
+            )->ModuleEnabled( Module => 'tickets' );
+            $LayoutObject->Block(
+                Name => 'TeztarifReportLink',
+            ) if $Authorized && $TicketEnabled;
+        }
+    }
+
     my $Output = $LayoutObject->Header();
     $Output .= $LayoutObject->NavigationBar();
     $Output .= $LayoutObject->Output(
