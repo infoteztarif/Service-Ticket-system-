@@ -26,6 +26,9 @@
         <p>Open a ticket to review related cases, possible duplicates and suggested resolutions.</p>
     </section>
     [% RenderBlockEnd("TeztarifDashboardAI") %]
+    [% RenderBlockStart("TeztarifReportLink") %]
+    <div class="TeztarifReportShortcut"><a class="CallForAction Primary" href="[% Env('Baselink') %]Action=AgentSaaSReports">Ticket Reports — filter by date</a></div>
+    [% RenderBlockEnd("TeztarifReportLink") %]
     [% InsertTemplate("AgentDashboardCommon.tt") %]
 </div>
 [% RenderBlockEnd("Content") %]

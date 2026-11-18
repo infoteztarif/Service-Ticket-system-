@@ -1,0 +1,64 @@
+# --
+# Copyright (C) 2026 Teztarif
+# --
+<div class="MainBox ARIARoleMain TeztarifAdminPage">
+    <div class="TeztarifReportHeading">
+        <div>
+            <h1>Ticket Reports & Dashboard</h1>
+            <p>Company-scoped, server-filtered ticket counts. All dates use UTC.</p>
+        </div>
+        <a href="[% Env('Baselink') %]Action=AgentSaaSReports" class="CallForAction">Reset filters</a>
+    </div>
+    <form action="[% Env('CGIHandle') %]" method="get" class="TeztarifReportFilters">
+        <input type="hidden" name="Action" value="AgentSaaSReports"/>
+        <label>From date
+            <input type="date" name="StartDate" value="[% Data.StartDate | html %]" required="required"/>
+        </label>
+        <label>To date
+            <input type="date" name="EndDate" value="[% Data.EndDate | html %]" required="required"/>
+        </label>
+        <label>Date basis
+            <select name="DateField">
+                <option value="created" [% IF Data.DateField == 'created' %]selected="selected"[% END %]>Ticket created</option>
+                <option value="changed" [% IF Data.DateField == 'changed' %]selected="selected"[% END %]>Last changed</option>
+            </select>
+        </label>
+        <label>Queue ID (optional)
+            <input type="number" name="QueueID" min="1" value="[% Data.QueueID | html %]" placeholder="All queues"/>
+        </label>
+        <label>Current state
+            <select name="StateType">
+                <option value="">All states</option>
+                [% FOREACH State IN ['new', 'open', 'closed', 'pending reminder', 'pending auto', 'removed', 'merged'] %]
+                <option value="[% State | html %]" [% IF Data.StateType == State %]selected="selected"[% END %]>[% State | html %]</option>
+                [% END %]
+            </select>
+        </label>
+        <button type="submit" class="CallForAction Primary">Apply filters</button>
+    </form>
+    <p class="TeztarifReportContext">
+        Period: <strong>[% Data.StartDate | html %] to [% Data.EndDate | html %]</strong>
+        (inclusive, UTC) &middot; Based on ticket [% Data.DateField | html %] date.
+    </p>
+    <div class="TeztarifReportMetrics">
+        <section><div class="TeztarifMetricLabel">Filtered tickets</div><div class="TeztarifMetricValue">[% Data.Total | html %]</div></section>
+        <section><div class="TeztarifMetricLabel">Currently open</div><div class="TeztarifMetricValue">[% Data.OpenCount | html %]</div></section>
+        <section><div class="TeztarifMetricLabel">Currently closed</div><div class="TeztarifMetricValue">[% Data.ClosedCount | html %]</div></section>
+        <section><div class="TeztarifMetricLabel">Currently pending</div><div class="TeztarifMetricValue">[% Data.PendingCount | html %]</div></section>
+    </div>
+    <section class="WidgetSimple">
+        <div class="Header"><h2>Filtered ticket breakdown</h2></div>
+        <div class="Content">
+            <table class="DataTable">
+                <thead><tr><th>Current state type</th><th>Tickets</th></tr></thead>
+                <tbody>
+                [% RenderBlockStart("ReportStateRow") %]
+                <tr><td>[% Data.State | html %]</td><td>[% Data.Count | html %]</td></tr>
+                [% RenderBlockEnd("ReportStateRow") %]
+                <tr><th>Total (all listed states)</th><th>[% Data.Total | html %]</th></tr>
+                </tbody>
+            </table>
+            <p>Counts are based on current ticket state, filtered by selected creation/last-change date. These are not historical state-transition counts.</p>
+        </div>
+    </section>
+</div>
