@@ -29,3 +29,14 @@ Review output and dependencies before use. Use the `teztarif_saas_seed_fresh_onl
 
 ## Release gate
 Keep PR draft. Run Znuny code policy, DB schema tests on every supported engine, migration upgrades/rollbacks, authenticated cross-company E2E and mobile/desktop interaction tests before merge/deployment. Do not classify this implementation as complete or production-ready.
+
+## Request tenant resolution and strict isolation gate
+- `SaaS::Enabled` (default **off**) enables membership lookup from the **validated session UserID**; it never accepts a client-provided tenant ID.
+- `SaaS::StrictTenantMode` (default **off**) blocks requests without active company membership, except the allowlisted platform administrator page.
+- Strict mode denies **unmapped** legacy Znuny frontend actions, pending explicit review and mapping. This intentionally makes some existing functionality inaccessible until audited.
+- Do **not** turn either flag on before applying tested database migrations, provisioning valid company membership and reviewing every ticket/article/API route.
+- Tenant record scope is checked for ticket zoom; other write/read entry points are not fully covered yet. Both flags off means legacy system behavior, **not** a secure multi-tenant SaaS.
+
+## Invitation and delete safety
+- Company Admin attach only links an existing valid Znuny user; it does not deliver a one-time invitation, create a password or prove email ownership.
+- Logical disable is implemented for teams, roles and departments. Hard delete with historical ticket references is intentionally withheld until referential-delete policy and backups have been validated.
