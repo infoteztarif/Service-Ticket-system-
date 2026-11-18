@@ -23,6 +23,31 @@
         </div>
     </div>
     <div class="WidgetSimple">
+        <div class="Header"><h2>Teams and Membership</h2></div>
+        <div class="Content">
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="CreateTeam"/>
+                <label for="TeamName">Team name</label><input id="TeamName" name="Name" maxlength="120" required="required"/>
+                <label for="TeamDepartment">Department ID</label><input id="TeamDepartment" name="DepartmentID" type="number" min="1" required="required"/>
+                <button class="CallForAction Primary" type="submit">Add team</button>
+            </form>
+            <table class="DataTable"><thead><tr><th>ID</th><th>Team</th><th>Department</th></tr></thead><tbody>
+            [% RenderBlockStart("TeamRow") %]
+            <tr><td>[% Data.ID | html %]</td><td>[% Data.Name | html %]</td><td>[% Data.Department | html %]</td></tr>
+            [% RenderBlockEnd("TeamRow") %]
+            </tbody></table>
+            <h3>Assign existing company user to a team</h3>
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="AddTeamMember"/>
+                <label for="MemberTeamID">Team ID</label><input id="MemberTeamID" name="TeamID" type="number" min="1" required="required"/>
+                <label for="TeamMemberUserID">Existing user ID</label><input id="TeamMemberUserID" name="MemberUserID" type="number" min="1" required="required"/>
+                <button class="CallForAction Primary" type="submit">Assign team member</button>
+            </form>
+        </div>
+    </div>
+    <div class="WidgetSimple">
         <div class="Header"><h2>Roles and Permissions</h2></div>
         <div class="Content">
             <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
@@ -37,6 +62,14 @@
             <tr><td>[% Data.ID | html %]</td><td>[% Data.Name | html %]</td></tr>
             [% RenderBlockEnd("RoleRow") %]
             </tbody></table>
+            <h3>Assign a role to an existing company user</h3>
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="AddUserRole"/>
+                <label for="AssignRoleID">Role ID</label><input name="RoleID" id="AssignRoleID" type="number" min="1" required="required"/>
+                <label for="AssignMemberID">Existing company user ID</label><input name="MemberUserID" id="AssignMemberID" type="number" min="1" required="required"/>
+                <button class="CallForAction Primary" type="submit">Assign user role</button>
+            </form>
             <h3>Assign a role permission</h3>
             <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
                 <input type="hidden" name="Action" value="AdminSaaSCompany"/>
@@ -65,7 +98,7 @@
                 <select name="Allowed" id="Allowed"><option value="1">Allow</option><option value="0">Deny</option></select>
                 <button class="CallForAction Primary" type="submit">Save permission</button>
             </form>
-            <p>Role assignment to individual users and record-scoped checks are still pending.</p>
+            <p>Role assignment requires existing authenticated company membership. Record-level scope enforcement still requires integration tests.</p>
         </div>
     </div>
 </div>
