@@ -1,0 +1,71 @@
+# --
+# Copyright (C) 2026 Teztarif
+# --
+<div class="MainBox ARIARoleMain" style="padding:18px">
+    <h1>Teztarif Company Administration</h1>
+    <p>Changes are restricted to your authenticated company and licensed modules.</p>
+    [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Departments</h2></div>
+        <div class="Content">
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="SaveDepartment"/>
+                <label for="DepartmentName">Department name</label>
+                <input name="Name" id="DepartmentName" maxlength="150" required="required"/>
+                <button type="submit" class="CallForAction Primary">Add department</button>
+            </form>
+            <table class="DataTable"><thead><tr><th>ID</th><th>Department</th><th>Status</th></tr></thead><tbody>
+            [% RenderBlockStart("DepartmentRow") %]
+            <tr><td>[% Data.ID | html %]</td><td>[% Data.Name | html %]</td><td>[% Data.ValidID | html %]</td></tr>
+            [% RenderBlockEnd("DepartmentRow") %]
+            </tbody></table>
+        </div>
+    </div>
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Roles and Permissions</h2></div>
+        <div class="Content">
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="CreateRole"/>
+                <label for="RoleName">Role name</label>
+                <input name="Name" id="RoleName" maxlength="120" required="required"/>
+                <button type="submit" class="CallForAction Primary">Create role</button>
+            </form>
+            <table class="DataTable"><thead><tr><th>ID</th><th>Role</th></tr></thead><tbody>
+            [% RenderBlockStart("RoleRow") %]
+            <tr><td>[% Data.ID | html %]</td><td>[% Data.Name | html %]</td></tr>
+            [% RenderBlockEnd("RoleRow") %]
+            </tbody></table>
+            <h3>Assign a role permission</h3>
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="SavePermission"/>
+                <label for="RoleID">Role ID (from table)</label>
+                <input name="RoleID" id="RoleID" type="number" min="1" required="required"/>
+                <label for="Module">Licensed module</label>
+                <select name="Module" id="Module" required="required">
+                [% RenderBlockStart("ModuleRow") %]
+                    <option value="[% Data.Code | html %]">[% Data.Code | html %]</option>
+                [% RenderBlockEnd("ModuleRow") %]
+                </select>
+                <label for="PermissionAction">Action</label>
+                <select name="PermissionAction" id="PermissionAction">
+                    <option value="view">View</option><option value="create">Create</option>
+                    <option value="edit">Edit</option><option value="delete">Delete</option>
+                    <option value="assign">Assign</option><option value="import">Import</option>
+                    <option value="export">Export</option><option value="approve">Approve</option>
+                    <option value="manage">Manage</option>
+                </select>
+                <label for="Scope">Data scope</label>
+                <select name="Scope" id="Scope"><option value="own">Own</option>
+                    <option value="team">Team</option><option value="department">Department</option>
+                    <option value="company">Company</option></select>
+                <label for="Allowed">Permission</label>
+                <select name="Allowed" id="Allowed"><option value="1">Allow</option><option value="0">Deny</option></select>
+                <button class="CallForAction Primary" type="submit">Save permission</button>
+            </form>
+            <p>Role assignment to individual users and record-scoped checks are still pending.</p>
+        </div>
+    </div>
+</div>
