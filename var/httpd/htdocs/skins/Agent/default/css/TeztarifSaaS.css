@@ -1,0 +1,68 @@
+/* Teztarif SaaS admin screens. Lightweight, responsive, no JS dependency. */
+.TeztarifManagementGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+    gap: 14px;
+    align-items: start;
+}
+.TeztarifManagementGrid form,
+.TeztarifManagementGrid > label {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid #dae2ec;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(22,34,54,.045);
+}
+.TeztarifManagementGrid h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.4;
+}
+.TeztarifManagementGrid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+}
+.TeztarifManagementGrid input,
+.TeztarifManagementGrid select {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-height: 40px;
+    border: 1px solid #c7d1df;
+    border-radius: 7px;
+    padding: 8px 10px;
+    font: inherit;
+}
+.TeztarifManagementGrid input:focus-visible,
+.TeztarifManagementGrid select:focus-visible,
+.TeztarifManagementGrid button:focus-visible {
+    outline: 3px solid #8bbaf5;
+    outline-offset: 2px;
+}
+.TeztarifManagementGrid button {
+    cursor: pointer;
+    border-radius: 8px;
+    min-height: 40px;
+}
+.TeztarifAdminPage {
+    box-sizing: border-box;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding: clamp(12px, 2.5vw, 30px);
+}
+.TeztarifAdminPage .WidgetSimple { margin-bottom: 18px; }
+.TeztarifAdminPage .Content { overflow-x: auto; }
+.TeztarifAdminPage .DataTable { width: 100%; }
+@media (max-width: 620px) {
+    .TeztarifManagementGrid { grid-template-columns: 1fr; }
+    .TeztarifAdminPage { padding: 10px; }
+    .TeztarifAdminPage h1 { font-size: 23px; line-height: 1.25; }
+    .TeztarifAdminPage .DataTable { min-width: 450px; }
+}
