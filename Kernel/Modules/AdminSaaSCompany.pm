@@ -34,7 +34,7 @@ sub Run {
     my $Request = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $Notice = '';
 
-    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission)\z/ ) {
+    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission|CreateTeam|AddTeamMember|AddUserRole)\z/ ) {
         $Layout->ChallengeTokenCheck();
 
         if ( $Self->{Subaction} eq 'SaveDepartment' ) {
@@ -49,6 +49,27 @@ sub Run {
                 UserID => $Self->{UserID},
                 Name => $Request->GetParam( Param => 'Name' ) || '',
             ) ? 'Role created.' : 'Unable to create role.';
+        }
+        elsif ( $Self->{Subaction} eq 'CreateTeam' ) {
+            $Notice = $Service->TeamCreate(
+                UserID => $Self->{UserID},
+                Name => $Request->GetParam( Param => 'Name' ) || '',
+                DepartmentID => $Request->GetParam( Param => 'DepartmentID' ) || '',
+            ) ? 'Team created.' : 'Unable to create team.';
+        }
+        elsif ( $Self->{Subaction} eq 'AddTeamMember' ) {
+            $Notice = $Service->TeamMemberAdd(
+                UserID => $Self->{UserID},
+                TeamID => $Request->GetParam( Param => 'TeamID' ) || '',
+                MemberUserID => $Request->GetParam( Param => 'MemberUserID' ) || '',
+            ) ? 'Team member added.' : 'Unable to add team member.';
+        }
+        elsif ( $Self->{Subaction} eq 'AddUserRole' ) {
+            $Notice = $Service->UserRoleAdd(
+                UserID => $Self->{UserID},
+                RoleID => $Request->GetParam( Param => 'RoleID' ) || '',
+                MemberUserID => $Request->GetParam( Param => 'MemberUserID' ) || '',
+            ) ? 'User role added.' : 'Unable to assign role.';
         }
         elsif ( $Self->{Subaction} eq 'SavePermission' ) {
             $Notice = $Service->RolePermissionSet(
@@ -66,6 +87,10 @@ sub Run {
     my $Roles = $Service->RoleList( UserID => $Self->{UserID} );
     for my $Department ( @{$Departments} ) {
         $Layout->Block( Name => 'DepartmentRow', Data => $Department );
+    }
+    my $Teams = $Service->TeamList( UserID => $Self->{UserID} );
+    for my $Team ( @{$Teams} ) {
+        $Layout->Block( Name => 'TeamRow', Data => $Team );
     }
     for my $Role ( @{$Roles} ) {
         $Layout->Block( Name => 'RoleRow', Data => $Role );
