@@ -85,6 +85,11 @@
             </Item>
         </Value>
     </Setting>
+    <Setting Name="Loader::Module::AgentSaaSAlerts###002-TeztarifJS" Required="0" Valid="1">
+        <Description Translatable="1">Ticket alert count refresh only while the page is open.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="JavaScript"><Array><Item>TeztarifSaaSAlerts.js</Item></Array></Item></Hash></Value>
+    </Setting>
     <Setting Name="Loader::Module::AgentSaaSAlerts###001-Teztarif" Required="0" Valid="1">
         <Description Translatable="1">Responsive styles for ticket alert page.</Description>
         <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
