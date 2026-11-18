@@ -365,6 +365,48 @@
     </ForeignKey>
 </Table>
 
+<!-- Teams are always in one company and one department. -->
+<Table Name="saas_team">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="department_id" Required="true" Type="BIGINT"/>
+    <Column Name="name" Required="true" Size="120" Type="VARCHAR"/>
+    <Column Name="valid_id" Required="true" Type="SMALLINT"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_team_tenant_department_name">
+        <UniqueColumn Name="tenant_id"/>
+        <UniqueColumn Name="department_id"/>
+        <UniqueColumn Name="name"/>
+    </Unique>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_department">
+        <Reference Local="department_id" Foreign="id"/>
+    </ForeignKey>
+</Table>
+<Table Name="saas_team_user">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="team_id" Required="true" Type="BIGINT"/>
+    <Column Name="user_id" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_team_user_unique">
+        <UniqueColumn Name="tenant_id"/>
+        <UniqueColumn Name="team_id"/>
+        <UniqueColumn Name="user_id"/>
+    </Unique>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="saas_team">
+        <Reference Local="team_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="user_id" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
 <!-- Teztarif roles are tenant-local; platform roles are not stored here. -->
 <Table Name="saas_role">
     <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
