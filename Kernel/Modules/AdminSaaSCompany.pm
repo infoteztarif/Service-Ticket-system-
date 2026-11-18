@@ -34,7 +34,7 @@ sub Run {
     my $Request = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $Notice = '';
 
-    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission|CreateTeam|AddTeamMember|AddUserRole)\z/ ) {
+    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission|CreateTeam|AddTeamMember|AddUserRole|MaintainEntity)\z/ ) {
         $Layout->ChallengeTokenCheck();
 
         if ( $Self->{Subaction} eq 'SaveDepartment' ) {
@@ -70,6 +70,15 @@ sub Run {
                 RoleID => $Request->GetParam( Param => 'RoleID' ) || '',
                 MemberUserID => $Request->GetParam( Param => 'MemberUserID' ) || '',
             ) ? 'User role added.' : 'Unable to assign role.';
+        }
+        elsif ( $Self->{Subaction} eq 'MaintainEntity' ) {
+            $Notice = $Service->EntityMaintain(
+                UserID => $Self->{UserID},
+                Entity => $Request->GetParam( Param => 'Entity' ) || '',
+                ID => $Request->GetParam( Param => 'EntityID' ) || '',
+                Operation => $Request->GetParam( Param => 'Operation' ) || '',
+                Name => $Request->GetParam( Param => 'Name' ) || '',
+            ) ? 'Record updated.' : 'Unable to update record.';
         }
         elsif ( $Self->{Subaction} eq 'SavePermission' ) {
             $Notice = $Service->RolePermissionSet(
