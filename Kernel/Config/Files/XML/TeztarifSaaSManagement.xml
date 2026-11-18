@@ -70,4 +70,29 @@
         <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
         <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
     </Setting>
+    <Setting Name="Frontend::Module###AgentSaaSAlerts" Required="0" Valid="1">
+        <Description Translatable="1">Company-scoped assigned ticket and SLA alerts screen.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration</Navigation>
+        <Value>
+            <Item ValueType="FrontendRegistration">
+                <Hash>
+                    <Item Key="GroupRo"><Array></Array></Item>
+                    <Item Key="Group"><Array></Array></Item>
+                    <Item Key="Description">Assigned ticket reminders</Item>
+                    <Item Key="Title">My Ticket Alerts</Item>
+                    <Item Key="NavBarName">Ticket</Item>
+                </Hash>
+            </Item>
+        </Value>
+    </Setting>
+    <Setting Name="Loader::Module::AgentSaaSAlerts###002-TeztarifJS" Required="0" Valid="1">
+        <Description Translatable="1">Ticket alert count refresh only while the page is open.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="JavaScript"><Array><Item>TeztarifSaaSAlerts.js</Item></Array></Item></Hash></Value>
+    </Setting>
+    <Setting Name="Loader::Module::AgentSaaSAlerts###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Responsive styles for ticket alert page.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
 </otrs_config>

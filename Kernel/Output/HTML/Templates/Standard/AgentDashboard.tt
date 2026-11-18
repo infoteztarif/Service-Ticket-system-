@@ -29,6 +29,11 @@
     [% RenderBlockStart("TeztarifReportLink") %]
     <div class="TeztarifReportShortcut"><a class="CallForAction Primary" href="[% Env('Baselink') %]Action=AgentSaaSReports">Ticket Reports — filter by date</a></div>
     [% RenderBlockEnd("TeztarifReportLink") %]
+    [% RenderBlockStart("TeztarifAlertsShortcut") %]
+    <div class="TeztarifReportShortcut">
+        <a class="CallForAction Primary" href="[% Env('Baselink') %]Action=AgentSaaSAlerts">My ticket alerts ([% Data.AlertCount | html %])</a>
+    </div>
+    [% RenderBlockEnd("TeztarifAlertsShortcut") %]
     [% InsertTemplate("AgentDashboardCommon.tt") %]
 </div>
 [% RenderBlockEnd("Content") %]

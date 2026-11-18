@@ -1,0 +1,35 @@
+# --
+# Copyright (C) 2026 Teztarif
+# --
+<div class="MainBox ARIARoleMain TeztarifAdminPage" id="TeztarifAlertsRoot" data-poll-url="[% Env('Baselink') %]Action=AgentSaaSAlerts;Subaction=Poll" data-initial-count="[% Data.AlertCount | html %]">
+    <div class="TeztarifReportHeading">
+        <div>
+            <h1>My Task &amp; Ticket Alerts</h1>
+            <p>Only tickets assigned to you in your company. SLA deadlines shown in UTC.</p>
+        </div>
+        <a href="[% Env('Baselink') %]Action=AgentSaaSAlerts" class="CallForAction">Refresh alerts</a>
+    </div>
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Active notifications (<span id="TeztarifAlertCount">[% Data.AlertCount | html %]</span>)</h2></div>
+        <div class="Content">
+            <p id="TeztarifAlertsRefreshNotice" role="status" aria-live="polite" hidden="hidden"></p>
+            <p>New assigned tickets (last 24 hours), SLA due within 24 hours and overdue SLA tickets are shown here.</p>
+            <p><strong>Alert count automatically checks for updates every two minutes while this page is visible.</strong> Refresh to see latest details. Background push/email alerts are not enabled.</p>
+            <div class="TeztarifAlertsList">
+                [% RenderBlockStart("SaaSTicketAlertRow") %]
+                <article class="TeztarifAlertCard">
+                    <div class="TeztarifAlertTitle">
+                        <a href="[% Env('Baselink') %]Action=AgentTicketZoom;TicketID=[% Data.TicketID | uri %]">[% Data.Title | html %]</a>
+                        <strong>[% Data.Type | html %]</strong>
+                    </div>
+                    <div>Ticket #[% Data.TicketID | html %] &middot; [% Data.State | html %]</div>
+                    <div>Created: [% Data.Created | html %] UTC &middot; SLA deadline: [% Data.DeadlineUTC | html %]</div>
+                </article>
+                [% RenderBlockEnd("SaaSTicketAlertRow") %]
+            </div>
+            [% IF Data.AlertCount == 0 %]
+            <p>No new or due alerts in the current window.</p>
+            [% END %]
+        </div>
+    </div>
+</div>
