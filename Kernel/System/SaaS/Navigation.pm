@@ -21,7 +21,7 @@ sub new {
 sub _ModuleForAction {
     my ( $Self, %Param ) = @_;
     my $Action = $Param{Action} // '';
-    return 'tickets' if $Action =~ /\AAgentTicket/;
+    return 'tickets' if $Action =~ /\AAgentTicket/ || $Action eq 'AgentSaaSAlerts';
     return 'dashboard' if $Action eq 'AgentDashboard';
     return 'team_management' if $Action eq 'AdminSaaSCompany';
     return 'reports' if $Action eq 'AgentSaaSReports' || $Action =~ /\AAgentStatistics/;
@@ -47,7 +47,7 @@ sub AllowedAction {
     # available functionality rather than risking cross-tenant disclosure.
     if ( $Kernel::OM->Get('Kernel::Config')->Get('SaaS::StrictTenantMode') ) {
         my %ReviewedActions = map { $_ => 1 } qw(
-            AdminSaaSCompany AgentSaaSReports AgentTicketZoom
+            AdminSaaSCompany AgentSaaSReports AgentSaaSAlerts AgentTicketZoom
         );
         return 0 if !$ReviewedActions{ $Param{Action} // '' };
     }
