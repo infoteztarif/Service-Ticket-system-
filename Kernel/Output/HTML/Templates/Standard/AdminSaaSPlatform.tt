@@ -23,6 +23,66 @@
         </div>
     </div>
     <div class="WidgetSimple">
+        <div class="Header"><h2>Company Controls</h2></div>
+        <div class="Content">
+            <p>Use company ID from the company table below. Activation requires an active administrator and subscription.</p>
+            <div class="TeztarifManagementGrid">
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <h3>Edit company name</h3>
+                    <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                    <input type="hidden" name="Subaction" value="UpdateCompany"/>
+                    <label>Company ID <input type="number" min="1" name="TenantID" required="required"/></label>
+                    <label>New name <input name="Name" maxlength="200" required="required"/></label>
+                    <button type="submit">Save company</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <h3>Activate / Suspend</h3>
+                    <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                    <input type="hidden" name="Subaction" value="SetStatus"/>
+                    <label>Company ID <input type="number" min="1" name="TenantID" required="required"/></label>
+                    <label>Status <select name="Status"><option value="suspended">Suspended</option><option value="active">Active</option></select></label>
+                    <button type="submit">Update status</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <h3>Existing user as Company Admin</h3>
+                    <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                    <input type="hidden" name="Subaction" value="AttachAdmin"/>
+                    <label>Company ID <input type="number" min="1" name="TenantID" required="required"/></label>
+                    <label>Existing User ID <input type="number" min="1" name="MemberUserID" required="required"/></label>
+                    <button type="submit">Attach admin</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <h3>Subscription</h3>
+                    <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                    <input type="hidden" name="Subaction" value="AssignPlan"/>
+                    <label>Company ID <input type="number" min="1" name="TenantID" required="required"/></label>
+                    <label>Plan <select name="PlanID">
+                        [% RenderBlockStart("PlanOption") %]
+                        <option value="[% Data.ID | html %]">[% Data.Name | html %]</option>
+                        [% RenderBlockEnd("PlanOption") %]
+                    </select></label>
+                    <label>Status <select name="Status"><option value="trial">Trial</option><option value="active">Active</option><option value="cancelled">Cancelled</option></select></label>
+                    <label>Start (UTC) <input name="StartTime" placeholder="2026-11-18 00:00:00" required="required" maxlength="19"/></label>
+                    <label>End (UTC, optional) <input name="EndTime" placeholder="2026-12-18 00:00:00" maxlength="19"/></label>
+                    <button type="submit">Assign subscription</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <h3>Module license override</h3>
+                    <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                    <input type="hidden" name="Subaction" value="SetModule"/>
+                    <label>Company ID <input type="number" min="1" name="TenantID" required="required"/></label>
+                    <label>Module <select name="Module">
+                        [% RenderBlockStart("ModuleOption") %]
+                        <option value="[% Data.Name | html %]">[% Data.Name | html %]</option>
+                        [% RenderBlockEnd("ModuleOption") %]
+                    </select></label>
+                    <label>Access <select name="Enabled"><option value="1">Enable</option><option value="0">Disable</option></select></label>
+                    <button type="submit">Save module license</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="WidgetSimple">
         <div class="Header"><h2>Registered Companies</h2></div>
         <div class="Content">
             <table class="DataTable"><thead><tr><th>ID</th><th>Name</th><th>Slug</th><th>Status</th></tr></thead><tbody>
