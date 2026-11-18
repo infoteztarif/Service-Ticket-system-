@@ -210,6 +210,117 @@ SQL
     );
 }
 
+sub TeamList {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return [] if !$TenantID;
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return [] if !$DB->Prepare(
+        SQL => 'SELECT t.id, t.name, d.name FROM saas_team t INNER JOIN saas_department d ON d.id = t.department_id AND d.tenant_id = t.tenant_id WHERE t.tenant_id = ? AND t.valid_id = 1 ORDER BY t.name',
+        Bind => [ \$TenantID ], Limit => 100,
+    );
+    my @Teams;
+    while ( my @Row = $DB->FetchrowArray() ) {
+        push @Teams, { ID => $Row[0], Name => $Row[1], Department => $Row[2] };
+    }
+    return \@Teams;
+}
+
+sub TeamCreate {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID || !$Param{Name} || length( $Param{Name} ) > 120;
+    return if !$Param{DepartmentID} || $Param{DepartmentID} !~ /\A[0-9]+\z/;
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    # Select the department from this tenant, never trust a submitted tenant ID.
+    return if !$DB->Prepare(
+        SQL => 'SELECT id FROM saas_department WHERE id = ? AND tenant_id = ? AND valid_id = 1',
+        Bind => [ \$Param{DepartmentID}, \$TenantID ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Do(
+        SQL => 'INSERT INTO saas_team (tenant_id, department_id, name, valid_id, create_time, create_by) VALUES (?, ?, ?, 1, current_timestamp, ?)',
+        Bind => [ \$TenantID, \$Param{DepartmentID}, \$Param{Name}, \$Param{UserID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => 'team_create', ObjectType => 'Team', ObjectID => $Param{Name},
+    );
+}
+
+sub TeamMemberAdd {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID || !$Param{TeamID} || !$Param{MemberUserID};
+    return if $Param{TeamID} !~ /\A[0-9]+\z/ || $Param{MemberUserID} !~ /\A[0-9]+\z/;
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    # Verify the requested team and member belong to the exact same tenant.
+    return if !$DB->Prepare(
+        SQL => <<'SQL',
+SELECT t.id
+FROM saas_team t
+INNER JOIN saas_department d ON d.id = t.department_id
+    AND d.tenant_id = t.tenant_id AND d.valid_id = 1
+INNER JOIN saas_tenant_user tu ON tu.tenant_id = t.tenant_id
+    AND tu.user_id = ? AND tu.valid_id = 1
+WHERE t.id = ? AND t.tenant_id = ? AND t.valid_id = 1
+SQL
+        Bind => [ \$Param{MemberUserID}, \$Param{TeamID}, \$TenantID ],
+        Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Do(
+        SQL => 'INSERT INTO saas_team_user (tenant_id, team_id, user_id) VALUES (?, ?, ?)',
+        Bind => [ \$TenantID, \$Param{TeamID}, \$Param{MemberUserID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => 'team_member_add', ObjectType => 'Team', ObjectID => $Param{TeamID},
+    );
+}
+
+sub UserRoleAdd {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID || !$Param{RoleID} || !$Param{MemberUserID};
+    return if $Param{RoleID} !~ /\A[0-9]+\z/ || $Param{MemberUserID} !~ /\A[0-9]+\z/;
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+    my $Context = $Kernel::OM->Get('Kernel::System::SaaS::Tenant')->ContextGet();
+    return if $Context->{AccessLevel} ne 'company_admin';
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => <<'SQL',
+SELECT r.id
+FROM saas_role r
+INNER JOIN saas_tenant_user tu ON tu.tenant_id = r.tenant_id
+    AND tu.user_id = ? AND tu.valid_id = 1
+WHERE r.id = ? AND r.tenant_id = ? AND r.valid_id = 1
+SQL
+        Bind => [ \$Param{MemberUserID}, \$Param{RoleID}, \$TenantID ],
+        Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Do(
+        SQL => 'INSERT INTO saas_user_role (tenant_id, user_id, role_id) VALUES (?, ?, ?)',
+        Bind => [ \$TenantID, \$Param{MemberUserID}, \$Param{RoleID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => 'user_role_add', ObjectType => 'Role', ObjectID => $Param{RoleID},
+    );
+}
+
 sub _Audit {
     my ( $Self, %Param ) = @_;
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
