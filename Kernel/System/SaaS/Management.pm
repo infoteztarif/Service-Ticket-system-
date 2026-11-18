@@ -519,6 +519,69 @@ sub CatalogList {
     return \%Catalog;
 }
 
+
+# Soft delete preserves audit/history and foreign-key references.
+# Supported entities are fixed allowlisted identifiers, not arbitrary SQL tables.
+sub EntityMaintain {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID;
+    my %Tables = ( department => 'saas_department', team => 'saas_team', role => 'saas_role' );
+    my $Table = $Tables{ $Param{Entity} // '' };
+    return if !$Table || !$Param{ID} || $Param{ID} !~ /\A[0-9]+\z/;
+    return if ( $Param{Operation} // '' ) !~ /\A(?:rename|disable|enable)\z/;
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => "SELECT id FROM $Table WHERE id = ? AND tenant_id = ?",
+        Bind => [ \$Param{ID}, \$TenantID ], Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+
+    my $Done;
+    if ( $Param{Operation} eq 'rename' ) {
+        return if !$Param{Name} || length( $Param{Name} ) > 120;
+        if ( $Param{Entity} eq 'department' ) {
+            return if length( $Param{Name} ) > 150;
+            $Done = $DB->Do(
+                SQL => 'UPDATE saas_department SET name = ?, change_time = current_timestamp, change_by = ? WHERE id = ? AND tenant_id = ?',
+                Bind => [ \$Param{Name}, \$Param{UserID}, \$Param{ID}, \$TenantID ],
+            );
+        }
+        else {
+            $Done = $DB->Do(
+                SQL => "UPDATE $Table SET name = ? WHERE id = ? AND tenant_id = ?",
+                Bind => [ \$Param{Name}, \$Param{ID}, \$TenantID ],
+            );
+        }
+    }
+    else {
+        my $ValidID = $Param{Operation} eq 'enable' ? 1 : 2;
+        if ( $Param{Entity} eq 'department' ) {
+            $Done = $DB->Do(
+                SQL => 'UPDATE saas_department SET valid_id = ?, change_time = current_timestamp, change_by = ? WHERE id = ? AND tenant_id = ?',
+                Bind => [ \$ValidID, \$Param{UserID}, \$Param{ID}, \$TenantID ],
+            );
+        }
+        else {
+            $Done = $DB->Do(
+                SQL => "UPDATE $Table SET valid_id = ? WHERE id = ? AND tenant_id = ?",
+                Bind => [ \$ValidID, \$Param{ID}, \$TenantID ],
+            );
+        }
+    }
+    return if !$Done;
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => $Param{Entity} . '_' . $Param{Operation},
+        ObjectType => $Param{Entity}, ObjectID => $Param{ID},
+    );
+}
+
 sub _Audit {
     my ( $Self, %Param ) = @_;
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
