@@ -24,7 +24,7 @@ sub _ModuleForAction {
     return 'tickets' if $Action =~ /\AAgentTicket/;
     return 'dashboard' if $Action eq 'AgentDashboard';
     return 'team_management' if $Action eq 'AdminSaaSCompany';
-    return 'reports' if $Action =~ /\AAgentStatistics/;
+    return 'reports' if $Action eq 'AgentSaaSReports' || $Action =~ /\AAgentStatistics/;
     return 'customers' if $Action =~ /\AAgentCustomer/;
     return;
 }
