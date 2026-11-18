@@ -124,3 +124,27 @@
     .TeztarifReportHeading { align-items: flex-start; }
     .TeztarifReportShortcut { padding: 10px; text-align: start; }
 }
+
+/* Accessible, compact task/SLA alert cards */
+.TeztarifAlertsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+    gap: 12px;
+    margin-block: 14px;
+}
+.TeztarifAlertCard {
+    padding: 16px;
+    border: 1px solid #d9e2ee;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15,30,50,.04);
+    line-height: 1.55;
+}
+.TeztarifAlertTitle { display: flex; gap: 12px; justify-content: space-between; flex-wrap: wrap; margin-bottom: 8px; }
+.TeztarifAlertTitle a { font-weight: 700; overflow-wrap: anywhere; }
+.TeztarifAlertTitle strong { color: #8a3f13; }
+#TeztarifAlertsRefreshNotice:not([hidden]) { padding: 9px 12px; border-left: 3px solid #4e7eb0; background: #eef4fd; }
+@media (max-width: 600px) {
+    .TeztarifAlertsList { grid-template-columns: 1fr; }
+    .TeztarifAlertCard { padding: 12px; }
+}
