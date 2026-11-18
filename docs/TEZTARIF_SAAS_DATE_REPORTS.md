@@ -29,3 +29,7 @@ This implementation intentionally rejects users with only OWN / TEAM / DEPARTMEN
 9. Include `ticket` and ownership indexes in DB performance tests for larger tenant datasets. Query plans have not been benchmarked.
 
 **Do not represent this draft as a complete or verified production SaaS release.**
+
+## Strict SaaS handling of legacy screens
+With `SaaS::StrictTenantMode` enabled, the navigation authorization gate now denies legacy ticket/dashboard/statistics routes not explicitly reviewed. The audited allowlist currently includes `AdminSaaSCompany`, `AgentSaaSReports`, and `AgentTicketZoom` (the latter has a record check). Platform Super Admin has a separate allowlisted route.
+This is a **temporary safety barrier** and intentionally prevents some original Znuny workflows. It does not prove that backend APIs, background jobs or every direct action is isolated; those still require an exhaustive audit.
