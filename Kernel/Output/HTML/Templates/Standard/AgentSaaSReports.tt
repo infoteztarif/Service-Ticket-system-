@@ -23,6 +23,13 @@
                 <option value="changed" [% IF Data.DateField == 'changed' %]selected="selected"[% END %]>Last changed</option>
             </select>
         </label>
+        <label>Data access scope
+            <select name="Scope">
+                [% FOREACH ScopeValue IN ['own', 'team', 'department', 'company'] %]
+                <option value="[% ScopeValue | html %]" [% IF Data.Scope == ScopeValue %]selected="selected"[% END %]>[% ScopeValue | html %]</option>
+                [% END %]
+            </select>
+        </label>
         <label>Queue ID (optional)
             <input type="number" name="QueueID" min="1" value="[% Data.QueueID | html %]" placeholder="All queues"/>
         </label>
@@ -38,7 +45,7 @@
     </form>
     <p class="TeztarifReportContext">
         Period: <strong>[% Data.StartDate | html %] to [% Data.EndDate | html %]</strong>
-        (inclusive, UTC) &middot; Based on ticket [% Data.DateField | html %] date.
+        (inclusive, UTC) &middot; Scope: <strong>[% Data.Scope | html %]</strong> &middot; Based on ticket [% Data.DateField | html %] date.
     </p>
     <div class="TeztarifReportMetrics">
         <section><div class="TeztarifMetricLabel">Filtered tickets</div><div class="TeztarifMetricValue">[% Data.Total | html %]</div></section>
@@ -58,7 +65,7 @@
                 <tr><th>Total (all listed states)</th><th>[% Data.Total | html %]</th></tr>
                 </tbody>
             </table>
-            <p>Counts are based on current ticket state, filtered by selected creation/last-change date. These are not historical state-transition counts.</p>
+            <p>Counts are based on current ticket state and authorized ticket records in your selected scope. These are not historical state-transition counts. For ranges exceeding 1000 tickets before permission filtering, narrow your dates: partial totals are never displayed.</p>
         </div>
     </section>
 </div>
