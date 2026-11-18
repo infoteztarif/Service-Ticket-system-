@@ -30,4 +30,14 @@
             </Item>
         </Value>
     </Setting>
+    <Setting Name="Loader::Module::AdminSaaSPlatform###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Responsive styling for platform SaaS management.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
+    <Setting Name="Loader::Module::AdminSaaSCompany###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Responsive styling for company SaaS management.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
 </otrs_config>
