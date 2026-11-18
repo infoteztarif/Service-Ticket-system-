@@ -34,6 +34,7 @@ sub Run {
     my $DateField = $Request->GetParam( Param => 'DateField' ) || 'created';
     my $QueueID   = $Request->GetParam( Param => 'QueueID' ) || '';
     my $StateType = $Request->GetParam( Param => 'StateType' ) || '';
+    my $Scope = $Request->GetParam( Param => 'Scope' ) || 'company';
 
     my $Result = $ReportService->TicketSummary(
         UserID => $Self->{UserID},
@@ -42,10 +43,11 @@ sub Run {
         DateField => $DateField,
         QueueID => $QueueID,
         StateType => $StateType,
+        Scope => $Scope,
     );
 
     return $Layout->NoPermission(
-        Message => 'Report unavailable: invalid date range or missing company report permission.',
+        Message => 'Report unavailable: check date, scope and permissions, or narrow the range (maximum 1000 matching tickets).',
     ) if !$Result;
 
     my $Total = $Result->{Total};
