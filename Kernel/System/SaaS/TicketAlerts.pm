@@ -67,10 +67,16 @@ SQL
         Limit => 80,
     );
 
+    # Copy rows before per-ticket authorization: those checks execute their
+    # own SQL and would otherwise invalidate the active DB result cursor.
+    my @Candidates;
+    while ( my @Row = $DB->FetchrowArray() ) {
+        push @Candidates, [@Row];
+    }
     my @Alerts;
     my $Record = $Kernel::OM->Get('Kernel::System::SaaS::RecordAccess');
-    while ( my @Row = $DB->FetchrowArray() ) {
-        my ( $TicketID, $Title, $Created, $Escalation, $State ) = @Row;
+    for my $Row (@Candidates) {
+        my ( $TicketID, $Title, $Created, $Escalation, $State ) = @{$Row};
         next if !$Record->TicketCheck(
             UserID => $Param{UserID}, TicketID => $TicketID,
             Action => 'view',
