@@ -65,13 +65,14 @@ sub TicketSummary {
     my $Context = $Tenant->ContextGet();
     return if !$Context || $Context->{UserID} != $Param{UserID};
 
+    my $Scope = $Param{Scope} // 'company';
+    return if $Scope !~ /\A(?:own|team|department|company)\z/;
+
     my $Permissions = $Kernel::OM->Get('Kernel::System::SaaS::Permission');
     return if !$Permissions->Check(
         UserID => $Param{UserID}, Module => 'reports',
-        Action => 'view', Scope => 'company',
+        Action => 'view', Scope => $Scope,
     );
-    # Ticket module can be turned off independently of reporting; never
-    # leak ticket totals from a disabled product module.
     return if !$Tenant->ModuleEnabled( Module => 'tickets' );
 
     my $Range = $Self->DateRange(%Param);
@@ -87,7 +88,7 @@ sub TicketSummary {
 
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
     my $SQL = qq{
-SELECT st.name, COUNT(DISTINCT t.id)
+SELECT t.id, st.name
 FROM ticket t
 INNER JOIN saas_object_tenant ownership
     ON ownership.object_type = 'Ticket' AND ownership.object_id = t.id
@@ -108,26 +109,51 @@ WHERE ownership.tenant_id = ?
         $SQL .= ' AND st.name = ?';
         push @Binds, \$StateType;
     }
-    $SQL .= ' GROUP BY st.name ORDER BY st.name';
+    $SQL .= ' ORDER BY t.id';
 
-    return if !$DB->Prepare( SQL => $SQL, Bind => \@Binds );
+    # We cannot publish accurate per-user totals from an unrestricted SQL
+    # GROUP BY. Validate each ticket using the same record access service as
+    # ticket views. Refuse oversized ranges instead of silently truncating.
+    my $MaxCandidates = 1000;
+    return if !$DB->Prepare(
+        SQL => $SQL, Bind => \@Binds, Limit => $MaxCandidates + 1,
+    );
+    my @Candidates;
+    while ( my @Row = $DB->FetchrowArray() ) {
+        push @Candidates, [@Row];
+        return if @Candidates > $MaxCandidates;
+    }
+
+    my $Record = $Kernel::OM->Get('Kernel::System::SaaS::RecordAccess');
+    my %Counts;
+    for my $Ticket (@Candidates) {
+        next if !$Record->TicketCheck(
+            UserID   => $Param{UserID},
+            TicketID => $Ticket->[0],
+            Action   => 'view',
+            Scope    => $Scope,
+        );
+        $Counts{ $Ticket->[1] }++;
+    }
+
     my @Rows;
     my $Total = 0;
-    while ( my @Row = $DB->FetchrowArray() ) {
-        my $Count = 0 + $Row[1];
-        $Total += $Count;
-        push @Rows, { State => $Row[0], Count => $Count };
+    for my $State (sort keys %Counts) {
+        $Total += $Counts{$State};
+        push @Rows, { State => $State, Count => $Counts{$State} };
     }
 
     return {
         Total => $Total,
         Rows => \@Rows,
+        Scope => $Scope,
         StartDate => $Range->{StartDate},
         EndDate => $Range->{EndDate},
         DateField => $Field,
         QueueID => $QueueID,
         StateType => $StateType,
         TimeZone => 'UTC',
+        CandidateLimit => $MaxCandidates,
     };
 }
 
