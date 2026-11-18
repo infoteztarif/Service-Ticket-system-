@@ -35,6 +35,36 @@ after it has been set.
 
 =cut
 
+# Resolve a company from the server-authenticated Znuny session user.
+# Never trust a tenant ID from GET, POST, cookies, headers or client state.
+sub ContextForUser {
+    my ( $Self, %Param ) = @_;
+    return if !$Param{UserID};
+    return if $Param{UserID} !~ /\A[0-9]+\z/;
+    my $DBObject = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DBObject->Prepare(
+        SQL => <<'SQL',
+SELECT tu.tenant_id
+FROM saas_tenant_user tu
+INNER JOIN saas_tenant t ON t.id = tu.tenant_id
+WHERE tu.user_id = ? AND tu.valid_id = 1
+    AND t.status IN ('active', 'trial')
+SQL
+        Bind => [ \$Param{UserID} ],
+        Limit => 2,
+    );
+    my @TenantIDs;
+    while ( my @Row = $DBObject->FetchrowArray() ) {
+        push @TenantIDs, $Row[0];
+    }
+    # Single-tenant membership only. If data is inconsistent, fail closed.
+    return if @TenantIDs != 1;
+    return $Self->ContextSet(
+        UserID => $Param{UserID},
+        TenantID => $TenantIDs[0],
+    );
+}
+
 sub ContextSet {
     my ( $Self, %Param ) = @_;
 
