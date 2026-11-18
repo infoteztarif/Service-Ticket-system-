@@ -1,0 +1,35 @@
+# --
+# Copyright (C) 2026 Teztarif
+# --
+<div class="MainBox ARIARoleMain" style="padding:18px">
+    <h1>Teztarif Platform — Super Admin</h1>
+    <p>Only explicitly authorized platform administrators can access this page.</p>
+    [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Company Onboarding</h2></div>
+        <div class="Content">
+            <p>New companies are initially suspended until administrator membership, subscription and licenses are provisioned.</p>
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSPlatform"/>
+                <input type="hidden" name="Subaction" value="CreateCompany"/>
+                <fieldset class="TableLike">
+                    <label for="CompanyName">Company name</label>
+                    <input type="text" name="Name" id="CompanyName" required="required" maxlength="150"/>
+                    <label for="CompanySlug">Company slug</label>
+                    <input type="text" name="Slug" id="CompanySlug" required="required" pattern="[a-z0-9][a-z0-9-]{1,60}" maxlength="61"/>
+                    <button type="submit" class="CallForAction Primary">Create suspended company</button>
+                </fieldset>
+            </form>
+        </div>
+    </div>
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Registered Companies</h2></div>
+        <div class="Content">
+            <table class="DataTable"><thead><tr><th>ID</th><th>Name</th><th>Slug</th><th>Status</th></tr></thead><tbody>
+            [% RenderBlockStart("CompanyRow") %]
+            <tr><td>[% Data.ID | html %]</td><td>[% Data.Name | html %]</td><td>[% Data.Slug | html %]</td><td>[% Data.Status | html %]</td></tr>
+            [% RenderBlockEnd("CompanyRow") %]
+            </tbody></table>
+        </div>
+    </div>
+</div>
