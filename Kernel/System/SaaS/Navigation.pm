@@ -41,6 +41,17 @@ sub AllowedAction {
     return 1 if !$Context;
     return if $Context->{UserID} != $Param{UserID};
 
+    # Legacy screens contain unscoped widgets/search paths. In strict SaaS
+    # mode allow only audited controllers until each legacy handler has its
+    # own tenant and record-level authorization. This deliberately reduces
+    # available functionality rather than risking cross-tenant disclosure.
+    if ( $Kernel::OM->Get('Kernel::Config')->Get('SaaS::StrictTenantMode') ) {
+        my %ReviewedActions = map { $_ => 1 } qw(
+            AdminSaaSCompany AgentSaaSReports AgentTicketZoom
+        );
+        return 0 if !$ReviewedActions{ $Param{Action} // '' };
+    }
+
     my $Module = $Self->_ModuleForAction( Action => $Param{Action} );
     if (!$Module) {
         # In strict SaaS mode, unknown Znuny actions are denied until each
