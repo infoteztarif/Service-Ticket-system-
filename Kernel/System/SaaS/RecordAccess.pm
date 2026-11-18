@@ -26,6 +26,7 @@ sub TicketCheck {
     return if !$Param{UserID} || !$Param{TicketID};
     return if $Param{TicketID} !~ /\A[0-9]+\z/;
     return if ( $Param{Action} // '' ) !~ /\A(?:view|edit|delete|assign|export|approve)\z/;
+    return if defined $Param{Scope} && $Param{Scope} !~ /\A(?:own|team|department|company)\z/;
 
     my $Tenant = $Kernel::OM->Get('Kernel::System::SaaS::Tenant');
     my $Context = $Tenant->ContextGet();
@@ -41,10 +42,11 @@ sub TicketCheck {
     );
 
     my $Permissions = $Kernel::OM->Get('Kernel::System::SaaS::Permission');
-    return 1 if $Permissions->Check(
-        UserID => $Param{UserID}, Module => 'tickets',
-        Action => $Param{Action}, Scope => 'company',
-    );
+    return 1 if ( !defined $Param{Scope} || $Param{Scope} eq 'company' )
+        && $Permissions->Check(
+            UserID => $Param{UserID}, Module => 'tickets',
+            Action => $Param{Action}, Scope => 'company',
+        );
     my %Record = $Ticket->TicketGet(
         TicketID => $Param{TicketID}, UserID => $Param{UserID},
     );
@@ -55,7 +57,8 @@ sub TicketCheck {
         ( $Record{OwnerID}, $Record{ResponsibleID} );
     return if !@Owners;
 
-    if ( grep { $_ == $Param{UserID} } @Owners ) {
+    if ( (!defined $Param{Scope} || $Param{Scope} eq 'own')
+        && grep { $_ == $Param{UserID} } @Owners ) {
         return 1 if $Permissions->Check(
             UserID => $Param{UserID}, Module => 'tickets',
             Action => $Param{Action}, Scope => 'own',
@@ -64,10 +67,11 @@ sub TicketCheck {
 
     # Team membership must be shared by the actor and the ticket's current
     # owner/responsible within this tenant.
-    if ( $Permissions->Check(
-        UserID => $Param{UserID}, Module => 'tickets',
-        Action => $Param{Action}, Scope => 'team',
-    ) ) {
+    if ( (!defined $Param{Scope} || $Param{Scope} eq 'team')
+        && $Permissions->Check(
+            UserID => $Param{UserID}, Module => 'tickets',
+            Action => $Param{Action}, Scope => 'team',
+        ) ) {
         for my $OwnerID (@Owners) {
             return if !$DB->Prepare(
                 SQL => <<'SQL',
@@ -86,10 +90,11 @@ SQL
         }
     }
 
-    if ( $Permissions->Check(
-        UserID => $Param{UserID}, Module => 'tickets',
-        Action => $Param{Action}, Scope => 'department',
-    ) ) {
+    if ( (!defined $Param{Scope} || $Param{Scope} eq 'department')
+        && $Permissions->Check(
+            UserID => $Param{UserID}, Module => 'tickets',
+            Action => $Param{Action}, Scope => 'department',
+        ) ) {
         for my $OwnerID (@Owners) {
             return if !$DB->Prepare(
                 SQL => <<'SQL',
