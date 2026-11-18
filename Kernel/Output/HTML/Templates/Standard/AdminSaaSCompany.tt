@@ -1,7 +1,7 @@
 # --
 # Copyright (C) 2026 Teztarif
 # --
-<div class="MainBox ARIARoleMain" style="padding:18px">
+<div class="MainBox ARIARoleMain TeztarifAdminPage">
     <h1>Teztarif Company Administration</h1>
     <p>Changes are restricted to your authenticated company and licensed modules.</p>
     [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
