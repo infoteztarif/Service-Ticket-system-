@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<database Name="znuny">
+<Insert Table="saas_plan"><Data Key="id" Type="AutoIncrement">1</Data><Data Key="code" Type="Quote">basic</Data><Data Key="name" Type="Quote">Basic</Data><Data Key="user_limit">10</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_plan"><Data Key="id" Type="AutoIncrement">2</Data><Data Key="code" Type="Quote">pro</Data><Data Key="name" Type="Quote">Pro</Data><Data Key="user_limit">50</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_plan"><Data Key="id" Type="AutoIncrement">3</Data><Data Key="code" Type="Quote">max</Data><Data Key="name" Type="Quote">Max</Data><Data Key="user_limit">250</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_module"><Data Key="id" Type="AutoIncrement">1</Data><Data Key="code" Type="Quote">dashboard</Data><Data Key="name" Type="Quote">Dashboard</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_module"><Data Key="id" Type="AutoIncrement">2</Data><Data Key="code" Type="Quote">tickets</Data><Data Key="name" Type="Quote">Tickets</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_module"><Data Key="id" Type="AutoIncrement">3</Data><Data Key="code" Type="Quote">team_management</Data><Data Key="name" Type="Quote">Teams and roles</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_module"><Data Key="id" Type="AutoIncrement">4</Data><Data Key="code" Type="Quote">ticket_ai</Data><Data Key="name" Type="Quote">Ticket AI</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_module"><Data Key="id" Type="AutoIncrement">5</Data><Data Key="code" Type="Quote">reports</Data><Data Key="name" Type="Quote">Reports</Data><Data Key="valid_id">1</Data><Data Key="create_time">current_timestamp</Data><Data Key="create_by">1</Data><Data Key="change_time">current_timestamp</Data><Data Key="change_by">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">1</Data><Data Key="module_id">1</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">1</Data><Data Key="module_id">2</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">1</Data><Data Key="module_id">3</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">1</Data><Data Key="module_id">4</Data><Data Key="enabled">0</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">1</Data><Data Key="module_id">5</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">2</Data><Data Key="module_id">1</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">2</Data><Data Key="module_id">2</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">2</Data><Data Key="module_id">3</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">2</Data><Data Key="module_id">4</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">2</Data><Data Key="module_id">5</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">3</Data><Data Key="module_id">1</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">3</Data><Data Key="module_id">2</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">3</Data><Data Key="module_id">3</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">3</Data><Data Key="module_id">4</Data><Data Key="enabled">1</Data></Insert>
+<Insert Table="saas_plan_module"><Data Key="plan_id">3</Data><Data Key="module_id">5</Data><Data Key="enabled">1</Data></Insert>
+</database>

@@ -30,4 +30,24 @@
             </Item>
         </Value>
     </Setting>
+    <Setting Name="Loader::Module::AdminSaaSPlatform###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Responsive styling for platform SaaS management.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
+    <Setting Name="Loader::Module::AdminSaaSCompany###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Responsive styling for company SaaS management.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
+    <Setting Name="SaaS::Enabled" Required="0" Valid="1">
+        <Description Translatable="1">Enable authenticated session to tenant resolution only after SaaS database migrations are installed.</Description>
+        <Navigation>Core</Navigation>
+        <Value><Item ValueType="Checkbox">0</Item></Value>
+    </Setting>
+    <Setting Name="SaaS::StrictTenantMode" Required="0" Valid="1">
+        <Description Translatable="1">Deny access to all users without active company membership, except allowlisted platform administrator management.</Description>
+        <Navigation>Core</Navigation>
+        <Value><Item ValueType="Checkbox">0</Item></Value>
+    </Setting>
 </otrs_config>

@@ -162,6 +162,23 @@ sub Run {
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
     my $MentionObject = $Kernel::OM->Get('Kernel::System::Mention');
 
+    # Tenant-owned tickets require both Znuny queue permissions and
+    # record-scope authorization. Never grant access by sidebar visibility.
+    my $SaaSTenantContext = $Kernel::OM->Get(
+        'Kernel::System::SaaS::Tenant'
+    )->ContextGet();
+    if ($SaaSTenantContext) {
+        return $LayoutObject->NoPermission(
+            Message => Translatable('Ticket access denied by company permissions.'),
+        ) if !$Kernel::OM->Get(
+            'Kernel::System::SaaS::RecordAccess'
+        )->TicketCheck(
+            TicketID => $Self->{TicketID},
+            UserID   => $Self->{UserID},
+            Action   => 'view',
+        );
+    }
+
     # check permissions
     my $Access = $TicketObject->TicketPermission(
         Type     => 'ro',

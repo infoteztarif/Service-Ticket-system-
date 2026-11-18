@@ -1,10 +1,27 @@
 # --
 # Copyright (C) 2026 Teztarif
 # --
-<div class="MainBox ARIARoleMain" style="padding:18px">
+<div class="MainBox ARIARoleMain TeztarifAdminPage">
     <h1>Teztarif Company Administration</h1>
     <p>Changes are restricted to your authenticated company and licensed modules.</p>
     [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
+    <div class="WidgetSimple">
+        <div class="Header"><h2>Edit / Deactivate Department, Team or Role</h2></div>
+        <div class="Content">
+            <p>Deactivate instead of hard delete to preserve ticket history and audit references.</p>
+            <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                <input type="hidden" name="Subaction" value="MaintainEntity"/>
+                <div class="TeztarifManagementGrid">
+                    <label>Entity <select name="Entity"><option value="department">Department</option><option value="team">Team</option><option value="role">Role</option></select></label>
+                    <label>Record ID <input name="EntityID" type="number" min="1" required="required"/></label>
+                    <label>Action <select name="Operation"><option value="rename">Edit name</option><option value="disable">Deactivate</option><option value="enable">Reactivate</option></select></label>
+                    <label>New name (edit only) <input name="Name" maxlength="120"/></label>
+                </div>
+                <button class="CallForAction Primary" type="submit">Save change</button>
+            </form>
+        </div>
+    </div>
     <div class="WidgetSimple">
         <div class="Header"><h2>Departments</h2></div>
         <div class="Content">

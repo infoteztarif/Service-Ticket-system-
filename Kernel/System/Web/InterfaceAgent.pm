@@ -1043,6 +1043,33 @@ sub Run {
             return;
         }
 
+        # Resolve tenant exclusively from validated session user. In strict
+        # SaaS mode, deny unassigned / suspended tenant users before routing.
+        # Rollout remains opt-in until existing users have been backfilled.
+        my $ContextReady = 0;
+        if (
+            $ConfigObject->Get('SaaS::Enabled')
+            || $ConfigObject->Get('SaaS::StrictTenantMode')
+            )
+        {
+            $ContextReady = $Kernel::OM->Get(
+                'Kernel::System::SaaS::Tenant'
+            )->ContextForUser(
+                UserID => $UserData{UserID},
+            );
+        }
+        if ( $ConfigObject->Get('SaaS::StrictTenantMode') && !$ContextReady ) {
+            my $IsPlatformAdmin = $Kernel::OM->Get(
+                'Kernel::System::SaaS::Management'
+            )->IsPlatformAdmin( UserID => $UserData{UserID} );
+            if ( !$IsPlatformAdmin || $Param{Action} ne 'AdminSaaSPlatform' ) {
+                $Kernel::OM->Get('Kernel::Output::HTML::Layout')->NoPermission(
+                    Message => Translatable('Active company membership is required.'),
+                );
+                return;
+            }
+        }
+
         # check module registry
         my $ModuleReg = $ConfigObject->Get('Frontend::Module')->{ $Param{Action} };
         if ( !$ModuleReg ) {

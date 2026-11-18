@@ -23,6 +23,9 @@ sub _ModuleForAction {
     my $Action = $Param{Action} // '';
     return 'tickets' if $Action =~ /\AAgentTicket/;
     return 'dashboard' if $Action eq 'AgentDashboard';
+    return 'team_management' if $Action eq 'AdminSaaSCompany';
+    return 'reports' if $Action =~ /\AAgentStatistics/;
+    return 'customers' if $Action =~ /\AAgentCustomer/;
     return;
 }
 
@@ -39,7 +42,12 @@ sub AllowedAction {
     return if $Context->{UserID} != $Param{UserID};
 
     my $Module = $Self->_ModuleForAction( Action => $Param{Action} );
-    return 1 if !$Module;
+    if (!$Module) {
+        # In strict SaaS mode, unknown Znuny actions are denied until each
+        # action is security-reviewed and explicitly mapped.
+        return 0 if $Kernel::OM->Get('Kernel::Config')->Get('SaaS::StrictTenantMode');
+        return 1;
+    }
 
     my $Permission = $Kernel::OM->Get('Kernel::System::SaaS::Permission');
     for my $Scope (qw(company department team own)) {
