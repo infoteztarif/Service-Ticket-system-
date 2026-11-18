@@ -50,4 +50,24 @@
         <Navigation>Core</Navigation>
         <Value><Item ValueType="Checkbox">0</Item></Value>
     </Setting>
+    <Setting Name="Frontend::Module###AgentSaaSReports" Required="0" Valid="1">
+        <Description Translatable="1">Tenant-scoped report dashboard with validated UTC date filters and live permissions.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration</Navigation>
+        <Value>
+            <Item ValueType="FrontendRegistration">
+                <Hash>
+                    <Item Key="GroupRo"><Array></Array></Item>
+                    <Item Key="Group"><Array></Array></Item>
+                    <Item Key="Description">Company ticket reports</Item>
+                    <Item Key="Title">Ticket Reports</Item>
+                    <Item Key="NavBarName">Ticket</Item>
+                </Hash>
+            </Item>
+        </Value>
+    </Setting>
+    <Setting Name="Loader::Module::AgentSaaSReports###001-Teztarif" Required="0" Valid="1">
+        <Description Translatable="1">Report dashboard responsive styling.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
+        <Value><Hash><Item Key="CSS"><Array><Item>TeztarifSaaS.css</Item></Array></Item></Hash></Value>
+    </Setting>
 </otrs_config>
