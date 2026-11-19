@@ -407,6 +407,60 @@
     </ForeignKey>
 </Table>
 
+<!-- Invitation tokens are stored as SHA-256 digests, never plaintext. -->
+<Table Name="saas_invitation">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="email" Required="true" Size="250" Type="VARCHAR"/>
+    <Column Name="token_sha256" Required="true" Size="64" Type="VARCHAR"/>
+    <Column Name="access_level" Required="true" Size="30" Type="VARCHAR"/>
+    <Column Name="expires_at" Required="true" Type="DATE"/>
+    <Column Name="accepted_at" Required="false" Type="DATE"/>
+    <Column Name="revoked_at" Required="false" Type="DATE"/>
+    <Column Name="create_time" Required="true" Type="DATE"/>
+    <Column Name="create_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_invitation_token_hash">
+        <UniqueColumn Name="token_sha256"/>
+    </Unique>
+    <Index Name="saas_invitation_tenant_email">
+        <IndexColumn Name="tenant_id"/>
+        <IndexColumn Name="email"/>
+    </Index>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="create_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
+<!-- Ticket-specific due time; separate from Znuny SLA escalation. -->
+<Table Name="saas_ticket_deadline">
+    <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>
+    <Column Name="tenant_id" Required="true" Type="BIGINT"/>
+    <Column Name="ticket_id" Required="true" Type="BIGINT"/>
+    <Column Name="due_at" Required="true" Type="DATE"/>
+    <Column Name="change_time" Required="true" Type="DATE"/>
+    <Column Name="change_by" Required="true" Type="INTEGER"/>
+    <Unique Name="saas_ticket_deadline_unique">
+        <UniqueColumn Name="tenant_id"/>
+        <UniqueColumn Name="ticket_id"/>
+    </Unique>
+    <Index Name="saas_ticket_deadline_due">
+        <IndexColumn Name="tenant_id"/>
+        <IndexColumn Name="due_at"/>
+    </Index>
+    <ForeignKey ForeignTable="saas_tenant">
+        <Reference Local="tenant_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="ticket">
+        <Reference Local="ticket_id" Foreign="id"/>
+    </ForeignKey>
+    <ForeignKey ForeignTable="users">
+        <Reference Local="change_by" Foreign="id"/>
+    </ForeignKey>
+</Table>
+
 <!-- Teztarif roles are tenant-local; platform roles are not stored here. -->
 <Table Name="saas_role">
     <Column Name="id" Required="true" PrimaryKey="true" AutoIncrement="true" Type="BIGINT"/>

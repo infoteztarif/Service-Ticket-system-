@@ -34,7 +34,7 @@ sub Run {
     my $Request = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $Notice = '';
 
-    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission|CreateTeam|AddTeamMember|AddUserRole|MaintainEntity)\z/ ) {
+    if ( $Self->{Subaction} =~ /\A(?:SaveDepartment|CreateRole|SavePermission|CreateTeam|AddTeamMember|AddUserRole|MaintainEntity|SetMemberStatus|RemoveGrant)\z/ ) {
         $Layout->ChallengeTokenCheck();
 
         if ( $Self->{Subaction} eq 'SaveDepartment' ) {
@@ -80,6 +80,21 @@ sub Run {
                 Name => $Request->GetParam( Param => 'Name' ) || '',
             ) ? 'Record updated.' : 'Unable to update record.';
         }
+        elsif ( $Self->{Subaction} eq 'SetMemberStatus' ) {
+            $Notice = $Service->MemberStatusSet(
+                UserID => $Self->{UserID},
+                MemberUserID => $Request->GetParam( Param => 'MemberUserID' ) || '',
+                Enabled => $Request->GetParam( Param => 'Enabled' ),
+            ) ? 'User membership updated.' : 'User membership update denied.';
+        }
+        elsif ( $Self->{Subaction} eq 'RemoveGrant' ) {
+            $Notice = $Service->GrantRemove(
+                UserID => $Self->{UserID},
+                MemberUserID => $Request->GetParam( Param => 'MemberUserID' ) || '',
+                RelationID => $Request->GetParam( Param => 'RelationID' ) || '',
+                Relation => $Request->GetParam( Param => 'Relation' ) || '',
+            ) ? 'Role/team permission revoked.' : 'Grant revocation denied.';
+        }
         elsif ( $Self->{Subaction} eq 'SavePermission' ) {
             $Notice = $Service->RolePermissionSet(
                 UserID => $Self->{UserID},
@@ -108,6 +123,20 @@ sub Run {
     my $Visible = $Permission->VisibleModules( UserID => $Self->{UserID} );
     for my $Module ( @{$Visible} ) {
         $Layout->Block( Name => 'ModuleRow', Data => { Code => $Module } );
+    }
+    my $Navigation = $Kernel::OM->Get('Kernel::System::SaaS::Navigation');
+    if ( $Navigation->AllowedAction(
+        UserID => $Self->{UserID}, Action => 'AgentSaaSAlerts',
+    ) ) {
+        $Layout->Block( Name => 'SaaSQuickAlerts' );
+    }
+    if ( $Permission->Check(
+        UserID => $Self->{UserID}, Module => 'reports',
+        Action => 'view', Scope => 'company',
+    ) && $Navigation->AllowedAction(
+        UserID => $Self->{UserID}, Action => 'AgentSaaSReports',
+    ) ) {
+        $Layout->Block( Name => 'SaaSQuickReports' );
     }
     my $Output = $Layout->Header();
     $Output .= $Layout->NavigationBar();

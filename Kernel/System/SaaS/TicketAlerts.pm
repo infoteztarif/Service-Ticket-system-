@@ -43,14 +43,18 @@ sub List {
     return [] if $Now !~ /\A\d{9,11}\z/;
     my $RecentStart = _UTCDateTime($Now - 86400);
     my $DueEnd      = $Now + 86400;
+    my $NowUTC      = _UTCDateTime($Now);
+    my $TaskEndUTC  = _UTCDateTime($DueEnd);
 
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
     return [] if !$DB->Prepare(
         SQL => <<'SQL',
-SELECT t.id, t.title, t.create_time, t.escalation_time, st.name
+SELECT t.id, t.title, t.create_time, t.escalation_time, st.name, d.due_at
 FROM ticket t
 INNER JOIN saas_object_tenant o
     ON o.object_type = 'Ticket' AND o.object_id = t.id
+LEFT JOIN saas_ticket_deadline d
+    ON d.tenant_id = o.tenant_id AND d.ticket_id = t.id
 INNER JOIN ticket_state ts ON ts.id = t.ticket_state_id
 INNER JOIN ticket_state_type st ON st.id = ts.type_id
 WHERE o.tenant_id = ? AND t.user_id = ?
@@ -58,11 +62,18 @@ WHERE o.tenant_id = ? AND t.user_id = ?
     AND (
         t.create_time >= ?
         OR (t.escalation_time > 0 AND t.escalation_time <= ?)
+        OR (d.due_at IS NOT NULL AND d.due_at <= ?)
     )
-ORDER BY t.create_time DESC
+ORDER BY
+    CASE
+        WHEN d.due_at IS NOT NULL AND d.due_at <= ? THEN 0
+        WHEN t.escalation_time > 0 AND t.escalation_time <= ? THEN 1
+        ELSE 2
+    END,
+    d.due_at ASC, t.escalation_time ASC, t.create_time DESC
 SQL
         Bind => [
-            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd,
+            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd, \$TaskEndUTC, \$TaskEndUTC, \$DueEnd,
         ],
         Limit => 80,
     );
@@ -76,18 +87,22 @@ SQL
     my @Alerts;
     my $Record = $Kernel::OM->Get('Kernel::System::SaaS::RecordAccess');
     for my $Row (@Candidates) {
-        my ( $TicketID, $Title, $Created, $Escalation, $State ) = @{$Row};
+        my ( $TicketID, $Title, $Created, $Escalation, $State, $TaskDue ) = @{$Row};
         next if !$Record->TicketCheck(
             UserID => $Param{UserID}, TicketID => $TicketID,
             Action => 'view',
         );
         my $IsNew = defined($Created) && $Created ge $RecentStart ? 1 : 0;
         my $HasSLA = $Escalation && $Escalation > 0;
-        my $Kind = $HasSLA && $Escalation <= $Now
-            ? 'Overdue SLA'
-            : $HasSLA && $Escalation <= $DueEnd
-                ? 'SLA due within 24 hours'
-                : $IsNew ? 'New assigned ticket' : '';
+        my $Kind = $TaskDue && $TaskDue le $NowUTC
+            ? 'Overdue task deadline'
+            : $HasSLA && $Escalation <= $Now
+                ? 'Overdue SLA'
+                : $TaskDue && $TaskDue le $TaskEndUTC
+                    ? 'Task due within 24 hours'
+                    : $HasSLA && $Escalation <= $DueEnd
+                        ? 'SLA due within 24 hours'
+                        : $IsNew ? 'New assigned ticket' : '';
         next if !$Kind;
 
         push @Alerts, {
@@ -96,6 +111,7 @@ SQL
             Type => $Kind,
             Created => $Created,
             DeadlineUTC => $HasSLA ? _UTCDateTime($Escalation) . ' UTC' : 'No SLA deadline',
+            TaskDueUTC => $TaskDue ? "$TaskDue UTC" : 'No task deadline',
             State => $State,
         };
         last if @Alerts >= 15;

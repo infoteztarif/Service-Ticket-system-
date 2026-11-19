@@ -10,6 +10,28 @@
         <a href="[% Env('Baselink') %]Action=AgentSaaSAlerts" class="CallForAction">Refresh alerts</a>
     </div>
     <div class="WidgetSimple">
+        <div class="Header"><h2>Manage a ticket task deadline</h2></div>
+        <div class="Content">
+            <p>Deadline is stored in UTC; updating requires edit permission for this ticket.</p>
+            [% IF Data.Notice %]<p role="status">[% Data.Notice | html %]</p>[% END %]
+            <div class="TeztarifManagementGrid">
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <input type="hidden" name="Action" value="AgentSaaSAlerts"/>
+                    <input type="hidden" name="Subaction" value="SaveDue"/>
+                    <label>Ticket ID <input name="TicketID" type="number" min="1" required="required"/></label>
+                    <label>Due date/time (UTC) <input name="DueAt" type="text" maxlength="19" placeholder="2026-11-25 17:00:00" required="required"/></label>
+                    <button class="CallForAction Primary" type="submit">Set deadline</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <input type="hidden" name="Action" value="AgentSaaSAlerts"/>
+                    <input type="hidden" name="Subaction" value="RemoveDue"/>
+                    <label>Ticket ID <input name="TicketID" type="number" min="1" required="required"/></label>
+                    <button type="submit">Remove task deadline</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="WidgetSimple">
         <div class="Header"><h2>Active notifications (<span id="TeztarifAlertCount">[% Data.AlertCount | html %]</span>)</h2></div>
         <div class="Content">
             <p id="TeztarifAlertsRefreshNotice" role="status" aria-live="polite" hidden="hidden"></p>
@@ -23,7 +45,7 @@
                         <strong>[% Data.Type | html %]</strong>
                     </div>
                     <div>Ticket #[% Data.TicketID | html %] &middot; [% Data.State | html %]</div>
-                    <div>Created: [% Data.Created | html %] UTC &middot; SLA deadline: [% Data.DeadlineUTC | html %]</div>
+                    <div>Created: [% Data.Created | html %] UTC &middot; SLA deadline: [% Data.DeadlineUTC | html %]<div>Task deadline: [% Data.TaskDueUTC | html %]</div></div>
                 </article>
                 [% RenderBlockEnd("SaaSTicketAlertRow") %]
             </div>
