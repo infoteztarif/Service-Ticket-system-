@@ -582,6 +582,84 @@ sub EntityMaintain {
     );
 }
 
+
+# Retention-safe user deprovisioning. Never physically delete a membership
+# while tickets, role grants and audit events may still reference the user.
+sub MemberStatusSet {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID || !$Param{MemberUserID};
+    return if $Param{MemberUserID} !~ /\A[1-9]\d*\z/;
+    return if $Param{MemberUserID} == $Param{UserID};
+    return if ( $Param{Enabled} // '' ) !~ /\A[01]\z/;
+    my $Context = $Kernel::OM->Get('Kernel::System::SaaS::Tenant')->ContextGet();
+    return if !$Context || $Context->{AccessLevel} ne 'company_admin';
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    return if !$DB->Prepare(
+        SQL => 'SELECT access_level, valid_id FROM saas_tenant_user WHERE tenant_id = ? AND user_id = ?',
+        Bind => [ \$TenantID, \$Param{MemberUserID} ], Limit => 1,
+    );
+    my @Member = $DB->FetchrowArray();
+    return if !@Member;
+    if ( !$Param{Enabled} && $Member[0] eq 'company_admin' ) {
+        # Preserve at least one active company admin.
+        return if !$DB->Prepare(
+            SQL => "SELECT COUNT(*) FROM saas_tenant_user WHERE tenant_id = ? AND access_level = 'company_admin' AND valid_id = 1",
+            Bind => [ \$TenantID ],
+        );
+        my @Count = $DB->FetchrowArray();
+        return if !@Count || $Count[0] <= 1;
+    }
+    my $ValidID = $Param{Enabled} ? 1 : 2;
+    return if !$DB->Do(
+        SQL => 'UPDATE saas_tenant_user SET valid_id = ?, change_time = current_timestamp, change_by = ? WHERE tenant_id = ? AND user_id = ?',
+        Bind => [ \$ValidID, \$Param{UserID}, \$TenantID, \$Param{MemberUserID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => $Param{Enabled} ? 'member_reactivate' : 'member_deactivate',
+        ObjectType => 'User', ObjectID => $Param{MemberUserID},
+    );
+}
+
+# Remove scoped membership grants while retaining users and ticket history.
+sub GrantRemove {
+    my ( $Self, %Param ) = @_;
+    my $TenantID = $Self->_TenantAccess(%Param);
+    return if !$TenantID;
+    return if ( $Param{Relation} // '' ) !~ /\A(?:team|role)\z/;
+    return if !$Param{MemberUserID} || $Param{MemberUserID} !~ /\A[1-9]\d*\z/;
+    return if !$Param{RelationID} || $Param{RelationID} !~ /\A[1-9]\d*\z/;
+    my $Context = $Kernel::OM->Get('Kernel::System::SaaS::Tenant')->ContextGet();
+    return if !$Context || $Context->{AccessLevel} ne 'company_admin';
+    return if !$Kernel::OM->Get('Kernel::System::SaaS::Permission')->Check(
+        UserID => $Param{UserID}, Module => 'team_management',
+        Action => 'manage', Scope => 'company',
+    );
+    my $DB = $Kernel::OM->Get('Kernel::System::DB');
+    my $Table = $Param{Relation} eq 'team' ? 'saas_team_user' : 'saas_user_role';
+    my $Column = $Param{Relation} eq 'team' ? 'team_id' : 'role_id';
+    return if !$DB->Prepare(
+        SQL => "SELECT id FROM $Table WHERE tenant_id = ? AND user_id = ? AND $Column = ?",
+        Bind => [ \$TenantID, \$Param{MemberUserID}, \$Param{RelationID} ],
+        Limit => 1,
+    );
+    return if !$DB->FetchrowArray();
+    return if !$DB->Do(
+        SQL => "DELETE FROM $Table WHERE tenant_id = ? AND user_id = ? AND $Column = ?",
+        Bind => [ \$TenantID, \$Param{MemberUserID}, \$Param{RelationID} ],
+    );
+    return $Self->_Audit(
+        TenantID => $TenantID, UserID => $Param{UserID},
+        Action => $Param{Relation} . '_grant_remove',
+        ObjectType => $Param{Relation}, ObjectID => $Param{RelationID},
+    );
+}
+
 sub _Audit {
     my ( $Self, %Param ) = @_;
     my $DB = $Kernel::OM->Get('Kernel::System::DB');
