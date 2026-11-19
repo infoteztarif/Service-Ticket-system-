@@ -12,6 +12,7 @@ our @ObjectDependencies = (
     'Kernel::System::SaaS::Tenant',
     'Kernel::System::SaaS::Management',
     'Kernel::System::SaaS::Permission',
+    'Kernel::System::SaaS::Deadlines',
 );
 
 sub new {
@@ -39,6 +40,10 @@ sub Create {
         || length( $Param{Email} ) > 250;
     return if ( $Param{AccessLevel} // '' ) !~ /\A(?:company_admin|staff)\z/;
     return if ( $Param{ExpiresAt} // '' ) !~ /\A\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\z/;
+    my $ExpiresEpoch = Kernel::System::SaaS::Deadlines::_ParseUTC( $Param{ExpiresAt} );
+    return if !defined $ExpiresEpoch
+        || $ExpiresEpoch <= time()
+        || $ExpiresEpoch > time() + 7 * 86400;
 
     my $Management = $Kernel::OM->Get('Kernel::System::SaaS::Management');
     if ( $Param{AccessLevel} eq 'company_admin' ) {
