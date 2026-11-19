@@ -124,6 +124,20 @@ sub Run {
     for my $Module ( @{$Visible} ) {
         $Layout->Block( Name => 'ModuleRow', Data => { Code => $Module } );
     }
+    my $Navigation = $Kernel::OM->Get('Kernel::System::SaaS::Navigation');
+    if ( $Navigation->AllowedAction(
+        UserID => $Self->{UserID}, Action => 'AgentSaaSAlerts',
+    ) ) {
+        $Layout->Block( Name => 'SaaSQuickAlerts' );
+    }
+    if ( $Permission->Check(
+        UserID => $Self->{UserID}, Module => 'reports',
+        Action => 'view', Scope => 'company',
+    ) && $Navigation->AllowedAction(
+        UserID => $Self->{UserID}, Action => 'AgentSaaSReports',
+    ) ) {
+        $Layout->Block( Name => 'SaaSQuickReports' );
+    }
     my $Output = $Layout->Header();
     $Output .= $Layout->NavigationBar();
     $Output .= $Layout->Output(
