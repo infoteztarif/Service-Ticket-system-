@@ -64,10 +64,16 @@ WHERE o.tenant_id = ? AND t.user_id = ?
         OR (t.escalation_time > 0 AND t.escalation_time <= ?)
         OR (d.due_at IS NOT NULL AND d.due_at <= ?)
     )
-ORDER BY t.create_time DESC
+ORDER BY
+    CASE
+        WHEN d.due_at IS NOT NULL AND d.due_at <= ? THEN 0
+        WHEN t.escalation_time > 0 AND t.escalation_time <= ? THEN 1
+        ELSE 2
+    END,
+    d.due_at ASC, t.escalation_time ASC, t.create_time DESC
 SQL
         Bind => [
-            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd, \$TaskEndUTC,
+            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd, \$TaskEndUTC, \$TaskEndUTC, \$DueEnd,
         ],
         Limit => 80,
     );
