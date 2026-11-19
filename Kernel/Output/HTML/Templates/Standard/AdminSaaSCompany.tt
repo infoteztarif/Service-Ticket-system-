@@ -23,6 +23,29 @@
         </div>
     </div>
     <div class="WidgetSimple">
+        <div class="Header"><h2>User Access &amp; Safe Removal</h2></div>
+        <div class="Content">
+            <p>Deactivate user access without deleting historical tickets or audit records. The final active company administrator cannot be deactivated.</p>
+            <div class="TeztarifManagementGrid">
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                    <input type="hidden" name="Subaction" value="SetMemberStatus"/>
+                    <label>Existing company user ID <input name="MemberUserID" type="number" min="1" required="required"/></label>
+                    <label>Access <select name="Enabled"><option value="0">Deactivate</option><option value="1">Reactivate</option></select></label>
+                    <button type="submit">Update user access</button>
+                </form>
+                <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
+                    <input type="hidden" name="Action" value="AdminSaaSCompany"/>
+                    <input type="hidden" name="Subaction" value="RemoveGrant"/>
+                    <label>Existing company user ID <input name="MemberUserID" type="number" min="1" required="required"/></label>
+                    <label>Grant type <select name="Relation"><option value="team">Team</option><option value="role">Role</option></select></label>
+                    <label>Team or role ID <input name="RelationID" type="number" min="1" required="required"/></label>
+                    <button type="submit">Revoke membership grant</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="WidgetSimple">
         <div class="Header"><h2>Departments</h2></div>
         <div class="Content">
             <form action="[% Env('CGIHandle') %]" method="post" class="Validate PreventMultipleSubmits">
