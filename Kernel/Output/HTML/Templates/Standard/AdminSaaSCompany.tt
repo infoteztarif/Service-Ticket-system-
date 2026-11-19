@@ -4,6 +4,15 @@
 <div class="MainBox ARIARoleMain TeztarifAdminPage">
     <h1>Teztarif Company Administration</h1>
     <p>Changes are restricted to your authenticated company and licensed modules.</p>
+    <nav class="TeztarifReportShortcut" aria-label="Company tools">
+        [% RenderBlockStart("SaaSQuickAlerts") %]
+        <a class="CallForAction" href="[% Env('Baselink') %]Action=AgentSaaSAlerts">My ticket alerts</a>
+        [% RenderBlockEnd("SaaSQuickAlerts") %]
+        [% RenderBlockStart("SaaSQuickReports") %]
+        <a class="CallForAction" href="[% Env('Baselink') %]Action=AgentSaaSReports">Date-filtered reports</a>
+        [% RenderBlockEnd("SaaSQuickReports") %]
+    </nav>
+
     [% IF Data.Notice %]<div class="MessageBox Notice">[% Data.Notice | html %]</div>[% END %]
     <div class="WidgetSimple">
         <div class="Header"><h2>Edit / Deactivate Department, Team or Role</h2></div>
