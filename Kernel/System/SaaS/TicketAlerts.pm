@@ -67,7 +67,7 @@ WHERE o.tenant_id = ? AND t.user_id = ?
 ORDER BY t.create_time DESC
 SQL
         Bind => [
-            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd,
+            \$Context->{TenantID}, \$Param{UserID}, \$RecentStart, \$DueEnd, \$TaskEndUTC,
         ],
         Limit => 80,
     );
